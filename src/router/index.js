@@ -1,32 +1,33 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import HomeView from '../views/HomeView.vue'
+import Board from '../views/Board.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     {
       path: '/',
-      name: 'home',
-      component: HomeView
+      name: 'welcome',
+      component: Board,
     },
     {
-      path: '/about',
-      name: 'about',
-      // route level code-splitting
-      // this generates a separate chunk (About.[hash].js) for this route
-      // which is lazy-loaded when the route is visited.
-      component: () => import('../views/AboutView.vue')
+      path: '/partenaire/reservations',
+      name: 'partner_calendar',
+      component: Board,
+    },
+    {
+      path: '/partenaire/occupations',
+      name: 'partner_closing',
+      component: Board,
+    },
+    {
+      path: '/partenaire/parametres',
+      name: 'partner_settings',
+      component: Board,
     },
     {
       path: "/login",
       name: "login",
       component: () => import('../views/Login.vue')
-    },
-    {
-      path: "/board",
-      name: "board",
-      // lazy-loaded
-      component: () => import('../views/Board.vue')
     }
   ]
 })
@@ -38,7 +39,8 @@ router.beforeEach((to, from, next) => {
   // trying to access a restricted page + not logged in
   // redirect to login page
   if (authRequired && !loggedIn) {
-    next('/login');
+    next();
+    // next('/login');
   } else {
     next();
   }
