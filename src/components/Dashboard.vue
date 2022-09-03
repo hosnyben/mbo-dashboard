@@ -32,7 +32,7 @@
                 <a href="#" class="group block flex-shrink-0">
                   <div class="flex items-center">
                     <div>
-                      <img class="inline-block h-10 w-10 rounded-full" src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80" alt="" />
+                      <img class="inline-block h-10 w-10 rounded-full" src="@/assets/profile.jpeg" alt="" />
                     </div>
                     <div class="ml-3">
                       <p class="text-base font-medium text-white">Tom Cook</p>
@@ -66,17 +66,17 @@
           </nav>
         </div>
         <div class="flex flex-shrink-0 bg-gray-700 p-4">
-          <a href="#" class="group block w-full flex-shrink-0">
+          <div class="group block w-full flex-shrink-0">
             <div class="flex items-center">
               <div>
-                <img class="inline-block h-9 w-9 rounded-full" src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80" alt="" />
+                <img class="inline-block h-9 w-9 rounded-full" src="@/assets/profile.jpeg" alt="" />
               </div>
               <div class="ml-3">
-                <p class="text-sm font-medium text-white">Tom Cook</p>
-                <p class="text-xs font-medium text-gray-300 group-hover:text-gray-200">View profile</p>
+                <p class="text-sm font-medium text-white">{{ user.user_display_name }}</p>
+                <p class="text-xs font-medium text-gray-300 group-hover:text-gray-200"><span @click="logOut" class="cursor-pointer">Déconnection</span></p>
               </div>
             </div>
-          </a>
+          </div>
         </div>
       </div>
     </div>
@@ -90,9 +90,7 @@
       <main class="flex-1">
         <div class="py-6">
           <div class="mx-auto max-w-7xl px-4 sm:px-6 md:px-8 overflow-y-auto">
-            <!-- Replace with your content -->
             <slot />
-            <!-- /End replace -->
           </div>
         </div>
       </main>
@@ -122,11 +120,18 @@ const sidebarOpen = ref(false)
     computed: {
       navigation() {
         return this.$store.state.other.navigation
+      },
+      user() {
+        return JSON.parse(localStorage.getItem('user'))
       }
     },
     methods: {
       current(item) {
         return item.href === this.$route.path
+      },
+      logOut() {
+        localStorage.removeItem('user');
+        this.$router.push("/ogin");
       }
     }
   };

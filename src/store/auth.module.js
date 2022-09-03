@@ -22,18 +22,6 @@ export const auth = {
     logout({ commit }) {
       AuthService.logout();
       commit('logout');
-    },
-    register({ commit }, user) {
-      return AuthService.register(user).then(
-        response => {
-          commit('registerSuccess');
-          return Promise.resolve(response.data);
-        },
-        error => {
-          commit('registerFailure');
-          return Promise.reject(error);
-        }
-      );
     }
   },
   mutations: {

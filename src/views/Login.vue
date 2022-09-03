@@ -33,8 +33,8 @@
                         <!-- <p class="text-sm font-light text-gray-500 dark:text-gray-400">
                             Don’t have an account yet? <a href="#" class="font-medium text-primary-200 hover:underline dark:text-primary-200">Sign up</a>
                         </p> -->
-                        <div v-if="message" class="alert alert-danger" role="alert">
-                            {{ message }}
+                        <div v-if="message" class="alert alert-danger dark:text-white text-gray-500" role="alert">
+                            <div v-html="message" class=""></div>
                         </div>
                     </Form>
                 </div>
@@ -67,7 +67,7 @@ export default {
     },
     created() {
         if (this.loggedIn) {
-            this.$router.push("/profile");
+            this.$router.push("/");
         }
     },
     methods: {
@@ -75,7 +75,7 @@ export default {
             this.loading = false;
             this.$store.dispatch("auth/login", user).then(
             () => {
-                this.$router.push("/profile");
+                this.$router.push("/");
             },
             (error) => {
                 this.loading = false;
