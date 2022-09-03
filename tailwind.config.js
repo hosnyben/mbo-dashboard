@@ -11,7 +11,14 @@ module.exports = {
       colors: {
         primary: {
           "100": "#ac9466",
-          "200": "#c6a061"
+          "200": "#c6a061",
+          "300": "#ac9466",
+          "400": "#c6a061",
+          "500": "#ac9466",
+          "600": "#c6a061",
+          "700": "#ac9466",
+          "800": "#c6a061",
+          "900": "#ac9466",
         }
       }
     },
@@ -52,5 +59,7 @@ module.exports = {
       ]
     }
   },
-  plugins: [],
+  plugins: [
+    require('@tailwindcss/forms'),
+  ],
 }

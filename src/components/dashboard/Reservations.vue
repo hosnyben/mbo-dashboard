@@ -1,5 +1,5 @@
 <template>
-  <div class="md:grid md:grid-cols-2 md:divide-x md:divide-gray-200 mt-10">
+  <div class="md:grid md:grid-cols-2 md:divide-x md:divide-gray-200">
     <div class="md:pr-14">
       <div class="flex items-center">
         <h2 class="flex-auto font-semibold text-gray-900 capitalize">{{ monthYear }}</h2>
@@ -23,7 +23,7 @@
       </div>
       <div class="mt-2 grid grid-cols-7 text-sm">
         <div v-for="(day, dayIdx) in days" :key="day.date" :class="[dayIdx > 6 && 'border-t border-gray-200', 'py-2']">
-          <button @click="setCurrentDay(day.iso)" type="button" :class="[day.isSelected && 'text-white', !day.isSelected && day.isToday && 'text-indigo-600', !day.isSelected && !day.isToday && day.isCurrentMonth && 'text-gray-900', !day.isSelected && !day.isToday && !day.isCurrentMonth && 'text-gray-400', day.isSelected && day.isToday && 'bg-indigo-600', day.isSelected && !day.isToday && 'bg-gray-900', !day.isSelected && 'hover:bg-gray-200', (day.isSelected || day.isToday) && 'font-semibold', 'mx-auto flex h-8 w-8 items-center justify-center rounded-full']">
+          <button @click="setCurrentDay(day.iso)" type="button" :class="[day.isSelected && 'text-white', !day.isSelected && day.isToday && 'text-primary-600', !day.isSelected && !day.isToday && day.isCurrentMonth && 'text-gray-900', !day.isSelected && !day.isToday && !day.isCurrentMonth && 'text-gray-400', day.isSelected && day.isToday && 'bg-primary-600', day.isSelected && !day.isToday && 'bg-gray-900', !day.isSelected && 'hover:bg-gray-200', (day.isSelected || day.isToday) && 'font-semibold', 'mx-auto flex h-8 w-8 items-center justify-center rounded-full']">
             <time :datetime="day.date">{{ day.date.split('-').pop().replace(/^0/, '') }}</time>
           </button>
         </div>

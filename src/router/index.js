@@ -20,6 +20,21 @@ const router = createRouter({
       component: Board,
     },
     {
+      path: '/partenaire/occupations/nouvelle',
+      name: 'partner_closing_new',
+      component: Board,
+    },
+    {
+      path: '/partenaire/occupations/modifier/:id',
+      name: 'partner_closing_edit',
+      component: Board,
+    },
+    {
+      path: '/partenaire/statistiques',
+      name: 'partner_stats',
+      component: Board,
+    },
+    {
       path: '/partenaire/parametres',
       name: 'partner_settings',
       component: Board,
@@ -33,7 +48,7 @@ const router = createRouter({
 })
 
 router.beforeEach((to, from, next) => {
-  const publicPages = ['/login', '/register', '/'];
+  const publicPages = ['/login'];
   const authRequired = !publicPages.includes(to.path);
   const loggedIn = localStorage.getItem('user');
   // trying to access a restricted page + not logged in
