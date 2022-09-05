@@ -35,8 +35,8 @@
                       <img class="inline-block h-10 w-10 rounded-full" src="@/assets/profile.jpeg" alt="" />
                     </div>
                     <div class="ml-3">
-                      <p class="text-base font-medium text-white">Tom Cook</p>
-                      <p class="text-sm font-medium text-gray-400 group-hover:text-gray-300">View profile</p>
+                      <p class="text-base font-medium text-white">{{ user.user_display_name }}</p>
+                      <p class="text-sm font-medium text-gray-400 group-hover:text-gray-300" @click="logOut">Deconnection</p>
                     </div>
                   </div>
                 </a>
@@ -131,7 +131,7 @@ const sidebarOpen = ref(false)
       },
       logOut() {
         localStorage.removeItem('user');
-        this.$router.push("/ogin");
+        this.$router.push("/login");
       }
     }
   };

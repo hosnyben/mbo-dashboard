@@ -1,7 +1,13 @@
 import axios from 'axios';
 import authHeader from './auth-header';
-const API_URL = 'http://localhost:8080/api/test/';
+const API_URL = 'https://www.marrakechbestof.com/wp-json/mbo/v1/';
 class UserService {
+  getReservations(year,month) {
+    return axios.get(API_URL + `get_resas/${year}/${month}`, { headers: authHeader() })
+  }
+  updateReservation(id,data) {
+    return axios.post(API_URL + `update_resa/${id}`,data, { headers: authHeader() })
+  }
   getPublicContent() {
     return axios.get(API_URL + 'all');
   }

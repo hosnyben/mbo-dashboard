@@ -1,8 +1,6 @@
 <template>
   <Dashboard>
-    <div class="py-20">
-      <component v-bind:is="currentcontent"></component>
-    </div>
+    <component v-bind:is="currentcontent"></component>
   </Dashboard>
 </template>
   

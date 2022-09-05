@@ -1,6 +1,8 @@
 <template>
-  <div class="md:grid md:grid-cols-2 md:divide-x md:divide-gray-200">
-    <div class="md:pr-14">
+  <h1 class="text-3xl font-bold tracking-tight text-primary-100 sm:text-4xl lg:text-5xl mb-10">Les réservations du <time :datetime="fullDigitDate" class="capitalize">{{fullDate}}</time></h1>
+
+  <div class="xl:grid xl:grid-cols-3 xl:divide-x xl:divide-gray-200">
+    <div class="xl:pr-7">
       <div class="flex items-center">
         <h2 class="flex-auto font-semibold text-gray-900 capitalize">{{ monthYear }}</h2>
         <button type="button" class="-my-1.5 flex flex-none items-center justify-center p-1.5 text-gray-400 hover:text-gray-500" @click="changeMonth(0)">
@@ -29,48 +31,152 @@
         </div>
       </div>
     </div>
-    <section class="mt-12 md:mt-0 md:pl-14">
-      <h2 class="font-semibold text-gray-900">Les réservations du <time :datetime="fullDigitDate" class="capitalize">{{fullDate}}</time></h2>
-      <ol class="mt-4 space-y-1 text-sm leading-6 text-gray-500">
-        <li v-for="meeting in meetings" :key="meeting.id" class="group flex items-center space-x-4 rounded-xl py-2 px-4 focus-within:bg-gray-100 hover:bg-gray-100">
-          <img :src="meeting.imageUrl" alt="" class="h-10 w-10 flex-none rounded-full" />
-          <div class="flex-auto">
-            <p class="text-gray-900">{{ meeting.name }}</p>
-            <p class="mt-0.5">
-              <time :datetime="meeting.startDatetime">{{ meeting.start }}</time> -
-              <time :datetime="meeting.endDatetime">{{ meeting.end }}</time>
-            </p>
-          </div>
-          <Menu as="div" class="relative opacity-0 focus-within:opacity-100 group-hover:opacity-100">
-            <div>
-              <MenuButton class="-m-2 flex items-center rounded-full p-1.5 text-gray-500 hover:text-gray-600">
-                <span class="sr-only">Open options</span>
-                <EllipsisVerticalIcon class="h-6 w-6" aria-hidden="true" />
-              </MenuButton>
-            </div>
-
-            <transition enter-active-class="transition ease-out duration-100" enter-from-class="transform opacity-0 scale-95" enter-to-class="transform opacity-100 scale-100" leave-active-class="transition ease-in duration-75" leave-from-class="transform opacity-100 scale-100" leave-to-class="transform opacity-0 scale-95">
-              <MenuItems class="absolute right-0 z-10 mt-2 w-36 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
-                <div class="py-1">
-                  <MenuItem v-slot="{ active }">
-                    <a href="#" :class="[active ? 'bg-gray-100 text-gray-900' : 'text-gray-700', 'block px-4 py-2 text-sm']">Edit</a>
-                  </MenuItem>
-                  <MenuItem v-slot="{ active }">
-                    <a href="#" :class="[active ? 'bg-gray-100 text-gray-900' : 'text-gray-700', 'block px-4 py-2 text-sm']">Cancel</a>
-                  </MenuItem>
+    <section class="mt-12 xl:mt-0 xl:pl-7 xl:col-span-2">
+      <div v-if="loading" class="mt-5 p-4 mb-4 text-sm text-white bg-primary-100 rounded-lg dark:bg-primary-200 dark:text-white" role="alert">Chargement en cours</div>
+      <div v-else>
+        <div class="sm:hidden">
+          <label for="tabs" class="sr-only">Type de réservation</label>
+          <!-- Use an "onChange" listener to redirect the user to the selected tab URL. -->
+          <select id="tabs" name="tabs" class="block w-full rounded-md border-gray-300 focus:border-primary-500 focus:ring-primary-500">
+            <option v-for="(resas,index) in dayResa" :key="index" :selected="index">{{ resas.label }}</option>
+          </select>
+        </div>
+        <div class="hidden sm:block">
+          <nav class="isolate flex divide-x divide-gray-200 rounded-lg shadow" aria-label="Tabs">
+            <span v-for="(resas,index) in dayResa" :key="index" @click="currentResaType = index" :class="[currentResaType === index ? 'text-gray-900' : 'text-gray-500 hover:text-gray-700', index === 'urgent' ? 'rounded-l-lg' : '', index === Object.keys(dayResa)[Object.keys(dayResa).length - 1] ? 'rounded-r-lg' : '', 'cursor-pointer group relative min-w-0 flex-1 overflow-hidden bg-white py-4 px-1 text-sm font-medium text-center hover:bg-gray-50 focus:z-10']" :aria-current="currentResaType === index ? 'page' : undefined">
+              <span>
+                {{ resas.label }}
+                <span :class="[currentResaType === index ? 'bg-primary-100 text-white' : 'bg-gray-100 text-gray-900', 'hidden ml-3 py-0.5 px-2.5 rounded-full text-xs font-medium md:inline-block']">{{ resas.resas.length }}</span>
+              </span>
+              <span aria-hidden="true" :class="[currentResaType === index ? 'bg-primary-500' : 'bg-transparent', 'absolute inset-x-0 bottom-0 h-0.5']" />
+            </span>
+          </nav>
+        </div>
+        <div v-for="(resas,index) in dayResa" :key="index">
+          <div class="pb-4 mb-4" v-if="index === currentResaType">
+            <ol class="mt-4 space-y-1 text-sm leading-6 text-gray-500" v-if="resas.resas.length">
+              <li v-for="reservation in resas.resas" :key="reservation.id" class="group flex items-center space-x-4 rounded-xl py-2 px-4 focus-within:bg-white hover:bg-white">
+                <!-- <img :src="meeting.imageUrl" alt="" class="h-10 w-10 flex-none rounded-full" /> -->
+                <div class="flex-auto">
+                  <p class="text-gray-900 font-semibold">
+                    {{ reservation['full-name'] }} 
+                    <span class="ml-2 inline-block flex-shrink-0 rounded-full px-2 py-0.5 text-xs font-medium bg-red-100 text-red-800" v-if="reservation.urgent">Dernière minute</span>
+                    <span class="ml-2 inline-block flex-shrink-0 rounded-full px-2 py-0.5 text-xs font-medium" :class="confirmationLabel[reservation['resa-confirmation']].class">{{confirmationLabel[reservation['resa-confirmation']].text}}</span>
+                    <span class="ml-2 inline-block flex-shrink-0 rounded-full px-2 py-0.5 text-xs font-medium bg-primary-100 text-white">{{ reservation.project}}</span>
+                  </p>
+                  <p class="mt-0.5">
+                    <time :datetime="dateDisplay(reservation.arrival,reservation.departure)[0]">{{ dateDisplay(reservation.arrival,reservation.departure)[0] }}</time>
+                    <time :datetime="dateDisplay(reservation.arrival,reservation.departure)[1]" v-if="dateDisplay(reservation.arrival,reservation.departure)[1]"> - {{ dateDisplay(reservation.arrival,reservation.departure)[1] }}</time>
+                  </p>
                 </div>
-              </MenuItems>
-            </transition>
-          </Menu>
-        </li>
-      </ol>
+                <Menu as="div" class="relative opacity-0 focus-within:opacity-100 group-hover:opacity-100">
+                  <div>
+                    <MenuButton class="-m-2 flex items-center rounded-full p-1.5 text-gray-500 hover:text-gray-600">
+                      <span class="sr-only">Open options</span>
+                      <EllipsisVerticalIcon class="h-6 w-6" aria-hidden="true" />
+                    </MenuButton>
+                  </div>
+
+                  <transition enter-active-class="transition ease-out duration-100" enter-from-class="transform opacity-0 scale-95" enter-to-class="transform opacity-100 scale-100" leave-active-class="transition ease-in duration-75" leave-from-class="transform opacity-100 scale-100" leave-to-class="transform opacity-0 scale-95">
+                    <MenuItems class="absolute right-0 z-10 mt-2 w-36 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+                      <div class="py-1">
+                        <MenuItem v-slot="{ active }">
+                          <span @click="selectResa(reservation)" :class="[active ? 'bg-gray-100 text-gray-900' : 'text-gray-700', 'block px-4 py-2 text-sm cursor-pointer']">Détails</span>
+                        </MenuItem>
+                        <MenuItem v-slot="{ active }" v-if="['urgent','active','refused','ignored','done'].includes(index) && ['not-confirmed','not-confirmed-owner','waiting'].includes(reservation['resa-confirmation'])">
+                          <span @click="confirmResa(reservation.id)" :class="[active ? 'bg-gray-100 text-gray-900' : 'text-gray-700', 'block px-4 py-2 text-sm cursor-pointer']">Confirmer</span>
+                        </MenuItem>
+                        <MenuItem v-slot="{ active }" v-if="['urgent','active','refused','ignored','done'].includes(index) && ['confirmed','confirmed-owner','waiting'].includes(reservation['resa-confirmation'])">
+                          <span @click="denyResa(reservation.id)" :class="[active ? 'bg-gray-100 text-gray-900' : 'text-gray-700', 'block px-4 py-2 text-sm cursor-pointer']">Refuser</span>
+                        </MenuItem>
+                      </div>
+                    </MenuItems>
+                  </transition>
+                </Menu>
+              </li>
+            </ol>
+            <div v-else class="p-4 my-4 text-sm text-yellow-700 bg-yellow-100 rounded-lg dark:bg-yellow-200 dark:text-yellow-800" role="alert">Vous n'avez aucune résérvation pour aujourd'hui.</div>
+          </div>
+        </div>
+      </div>
     </section>
   </div>
+  <TransitionRoot as="template" :show="showModal">
+    <Dialog as="div" class="relative z-10" @close="showModal = false">
+      <TransitionChild as="template" enter="ease-out duration-300" enter-from="opacity-0" enter-to="opacity-100" leave="ease-in duration-200" leave-from="opacity-100" leave-to="opacity-0">
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" />
+      </TransitionChild>
+
+      <div class="fixed inset-0 z-10 overflow-y-auto">
+        <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+          <TransitionChild as="template" enter="ease-out duration-300" enter-from="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" enter-to="opacity-100 translate-y-0 sm:scale-100" leave="ease-in duration-200" leave-from="opacity-100 translate-y-0 sm:scale-100" leave-to="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95">
+            <DialogPanel class="relative transform overflow-hidden rounded-lg bg-white pb-4 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg">
+              <div class="overflow-hidden bg-white shadow sm:rounded-lg">
+                <div class="px-4 py-5 sm:px-6">
+                  <DialogTitle as="h3" class="text-lg font-medium leading-6 text-gray-900">{{ selectedResa['full-name'] }} #{{ selectedResa.id }}</DialogTitle>
+                  <p class="mt-1 max-w-2xl text-sm text-gray-500">Date de réservation 
+                    <time :datetime="dateDisplay(selectedResa.arrival,selectedResa.departure)[0]">{{ dateDisplay(selectedResa.arrival,selectedResa.departure)[0] }}</time>
+                    <time :datetime="dateDisplay(selectedResa.arrival,selectedResa.departure)[1]" v-if="dateDisplay(selectedResa.arrival,selectedResa.departure)[1]"> - {{ dateDisplay(selectedResa.arrival,selectedResa.departure)[1] }}</time>
+                  </p>
+                  <span class="mr-2 inline-block flex-shrink-0 rounded-full px-2 py-0.5 text-xs font-medium bg-red-100 text-red-800" v-if="selectedResa.urgent">Dernière minute</span>
+                  <span class="mr-2 inline-block flex-shrink-0 rounded-full px-2 py-0.5 text-xs font-medium" :class="confirmationLabel[selectedResa['resa-confirmation']].class">{{confirmationLabel[selectedResa['resa-confirmation']].text}}</span>
+                  <span class="ml-2 inline-block flex-shrink-0 rounded-full px-2 py-0.5 text-xs font-medium bg-primary-100 text-white">{{ selectedResa.project}}</span>
+                </div>
+                <div class="border-t border-gray-200">
+                  <dl>
+                    <div class="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                      <dt class="text-sm font-medium text-gray-500">Nom complet</dt>
+                      <dd class="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">{{ selectedResa['full-name'] }}</dd>
+                    </div>
+                    <div class="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                      <dt class="text-sm font-medium text-gray-500">Adresse E-mail</dt>
+                      <dd class="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">{{ selectedResa.email }}</dd>
+                    </div>
+                    <div class="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                      <dt class="text-sm font-medium text-gray-500">Téléphone</dt>
+                      <dd class="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">{{ selectedResa['country-phone'] }}{{ selectedResa.phone }}</dd>
+                    </div>
+                    <div class="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                      <dt class="text-sm font-medium text-gray-500">Nombre de personnes</dt>
+                      <dd class="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">{{ selectedResa['nbr-adult'] }} Adultes - {{ selectedResa['nbr-children'] || 0 }} Enfants</dd>
+                    </div>
+                    <div class="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                      <dt class="text-sm font-medium text-gray-500">Commentaire du client</dt>
+                      <dd class="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0 italic">{{ selectedResa.comments || 'Aucun' }}</dd>
+                    </div>
+                    <div class="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                      <dt class="text-sm font-medium text-gray-500">Détails</dt>
+                      <dd class="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">
+                        <ul role="list" class="divide-y divide-gray-200 rounded-md border border-gray-200" v-if="selectedResa.fields">
+                          <li class="flex items-center justify-between py-3 pl-3 pr-4 text-sm" v-for="(field,index) in selectedResa.fields" :key="index">
+                            <div class="flex w-0 flex-1 items-center">
+                              <span class="ml-2 w-0 flex-1">{{ field.placeholder }}</span>
+                            </div>
+                            <div class="ml-4 flex-shrink-0">
+                              <span class="ml-2 w-0 flex-1">{{ field.value }}</span>
+                            </div>
+                          </li>
+                        </ul>
+                        <span v-else class="italic">Aucuns</span>
+                      </dd>
+                    </div>
+                  </dl>
+                </div>
+              </div>
+              <div class="mt-5 flex flex-col items-center">
+                <button type="button" class="inline-flex justify-center rounded-md border border-transparent bg-primary-600 px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 sm:col-start-2 sm:text-sm" @click="showModal = false">Fermer</button>
+              </div>
+            </DialogPanel>
+          </TransitionChild>
+        </div>
+      </div>
+    </Dialog>
+  </TransitionRoot>
 </template>
 
 <script setup>
 import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/vue/20/solid'
-import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue'
+import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot,Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue'
 import { EllipsisVerticalIcon } from '@heroicons/vue/24/outline'
 import startOfToday from 'date-fns/startOfToday'
 import startOfMonth from 'date-fns/startOfMonth'
@@ -86,6 +192,11 @@ import addMonths from 'date-fns/addMonths'
 import subMonths from 'date-fns/subMonths'
 import getMonth from 'date-fns/getMonth'
 import { fr } from 'date-fns/locale'
+import userService from '../../services/user.service'
+import isSameHour from 'date-fns/isSameHour'
+import compareAsc from 'date-fns/compareAsc'
+import differenceInHours from 'date-fns/differenceInHours'
+
 </script>
 <script>
   export default {
@@ -94,16 +205,51 @@ import { fr } from 'date-fns/locale'
       return {
         currentDay: null,
 				currentMonth: null,
+        reservations: [],
+        selectedResa: {},
+        showModal: false,
+        loading: false,
+        confirmationLabel : {
+          'waiting' : {
+            class : 'text-yellow-800 bg-yellow-100',
+            text : 'En attente de confirmation'
+          },
+          'confirmed' : {
+            class : 'text-green-800 bg-green-100',
+            text : 'Confirmée'
+          },
+          'not-confirmed' : {
+            class : 'text-gray-700 bg-gray-300',
+            text : 'Refusée'
+          },
+          'confirmed-owner' : {
+            class : 'text-green-800 bg-green-100',
+            text : 'Confirmée par le propriétaire'
+          },
+          'not-confirmed-owner' : {
+            class : 'text-gray-700 bg-gray-300',
+            text : 'Refusée par le propriétaire'
+          }
+        },
+        currentResaType: 'active',
+        now : Date.now()
       };
     },
     mounted() {
-			const today = startOfToday();
-			this.setCurrentDay(today);
+      const today = startOfToday();
+      this.setCurrentDay(today);
+
+      setInterval(() => {
+        this.now = Date.now();
+        this.getReservations(this.currentDay || today);
+      }, 1000*60*10); // Refresh in 10 minutes
     },
 		methods: {
 			setCurrentDay(day) {
-				if( !this.currentMonth || !isSameMonth(this.currentDay,day) )
+				if( !this.currentMonth || !isSameMonth(this.currentDay,day) ){
 					this.setCurrentMonth(day);
+          this.getReservations(day);
+        }
 
 				this.currentDay = day;
 			},
@@ -113,9 +259,99 @@ import { fr } from 'date-fns/locale'
 			changeMonth(next) {
 				if (next) this.setCurrentDay(addMonths(this.currentDay,1));
 				else this.setCurrentDay(subMonths(this.currentDay,1));
-			}
+			},
+      async getReservations(day) {
+        this.loading = true;
+        this.reservations = await userService.getReservations(format(day, 'Y'),format(day, 'M')).then(({data}) => {
+          this.loading = false;
+          return data
+        });
+      },
+      async confirmResa(id) {
+        await userService.updateReservation(id,{'resa-confirmation':'confirmed-owner'}).then(({data}) => {
+          if( data ){
+            this.reservations.forEach(resa => {
+              if( resa.id === id ) {
+                resa['resa-confirmation'] = 'confirmed-owner';
+                return
+              }
+            })
+          }
+        });
+      },
+      async denyResa(id) {
+        await userService.updateReservation(id,{'resa-confirmation':'not-confirmed-owner'}).then(({data}) => {
+          if( data ){
+            this.reservations.forEach(resa => {
+              if( resa.id === id ) {
+                resa['resa-confirmation'] = 'not-confirmed-owner';
+                return
+              }
+            })
+          }
+        });
+      },
+      selectResa(resa) {
+        this.selectedResa = resa;
+        this.showModal = true;
+      },
+      dateDisplay(from,to){
+        from = new Date(from);
+        to = new Date(to);
+
+        if( isSameDay(from,to) )
+          return [format(from,'HH:mm'),format(to,'HH:mm')]
+        else {
+          if( isSameHour(from,to) )
+            return [format(from,'dd-MM-yyyy à HH:mm'),null]
+          else
+            return [format(from,'dd-MM-yyyy à HH:mm'),format(to,'dd-MM-yyyy à HH:mm')]
+        }
+      }
 		},
     computed: {
+      dayResa() {
+        const reservations = this.reservations.filter(({arrival}) => {
+          return isSameDay(this.currentDay,new Date(arrival));
+        }).map(resa => {
+          return {...resa,...{urgent:isSameDay(new Date(resa.created_at),new Date(resa.arrival))}};
+        }).sort((a, b) => {
+            return compareAsc(new Date(a.arrival),new Date(b.arrival));
+        });
+
+        return {
+          urgent : {
+            label : 'Urgentes',
+            resas : reservations.filter(resa => {
+              return differenceInHours(new Date(resa.arrival),this.now) >= 0 && !['not-confirmed','not-confirmed-owner'].includes(resa['resa-confirmation']) && resa.urgent
+            })
+          },
+          active : {
+            label : 'À traiter',
+            resas : reservations.filter(resa => {
+              return differenceInHours(new Date(resa.arrival),this.now) >= 0 && !['not-confirmed','not-confirmed-owner'].includes(resa['resa-confirmation']) && !resa.urgent
+            })
+          },
+          done : {
+            label : 'Traitées',
+            resas : reservations.filter(resa => {
+              return differenceInHours(new Date(resa.arrival),this.now) < 0 && ['confirmed','confirmed-owner'].includes(resa['resa-confirmation'])
+            })
+          },
+          refused : {
+            label : 'Refusées',
+            resas : reservations.filter(resa => {
+              return ['not-confirmed','not-confirmed-owner'].includes(resa['resa-confirmation'])
+            })
+          },
+          ignored : {
+            label: 'Ignorées',
+            resas : reservations.filter(resa => {
+              return differenceInHours(new Date(resa.arrival),this.now) < 0 && ['waiting'].includes(resa['resa-confirmation'])
+            })
+          },
+        };
+      },
       navigation() {
         return this.$store.state.other.navigation
       },
@@ -151,17 +387,4 @@ import { fr } from 'date-fns/locale'
 			}
     }
   };
-	
-const meetings = [
-  {
-    id: 1,
-    name: 'Leslie Alexander',
-    imageUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80',
-    start: '1:00 PM',
-    startDatetime: '2022-01-21T13:00',
-    end: '2:30 PM',
-    endDatetime: '2022-01-21T14:30',
-  },
-  // More meetings...
-]
 </script>
