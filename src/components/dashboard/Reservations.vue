@@ -66,7 +66,7 @@
                   </p>
                   <p class="mt-0.5">
                     <time :datetime="dateDisplay(reservation.arrival,reservation.departure)[0]">{{ dateDisplay(reservation.arrival,reservation.departure)[0] }}</time>
-                    <time :datetime="dateDisplay(reservation.arrival,reservation.departure)[1]" v-if="dateDisplay(reservation.arrival,reservation.departure)[1]"> - {{ dateDisplay(reservation.arrival,reservation.departure)[1] }}</time>
+                    <time :datetime="dateDisplay(reservation.arrival,reservation.departure)[1]" v-if="dateDisplay(reservation.arrival,reservation.departure)[1] && dateDisplay(reservation.arrival,reservation.departure)[0] !== dateDisplay(reservation.arrival,reservation.departure)[1]"> - {{ dateDisplay(reservation.arrival,reservation.departure)[1] }}</time>
                   </p>
                 </div>
                 <Menu as="div" class="relative opacity-0 focus-within:opacity-100 group-hover:opacity-100">
@@ -83,10 +83,10 @@
                         <MenuItem v-slot="{ active }">
                           <span @click="selectResa(reservation)" :class="[active ? 'bg-gray-100 text-gray-900' : 'text-gray-700', 'block px-4 py-2 text-sm cursor-pointer']">Détails</span>
                         </MenuItem>
-                        <MenuItem v-slot="{ active }" v-if="['urgent','active','refused','ignored','done'].includes(index) && ['not-confirmed','not-confirmed-owner','waiting'].includes(reservation['resa-confirmation'])">
-                          <span @click="confirmResa(reservation.id)" :class="[active ? 'bg-gray-100 text-gray-900' : 'text-gray-700', 'block px-4 py-2 text-sm cursor-pointer']">Confirmer</span>
+                        <MenuItem v-slot="{ active }" v-if="differenceInHours(new Date(reservation.arrival),now) >= 0 && ['not-confirmed','not-confirmed-owner','waiting'].includes(reservation['resa-confirmation'])">
+                          <span @click="confirmResa(reservation.id)" :class="[active ? 'bg-gray-100 text-gray-900' : 'text-gray-700', 'block px-4 py-2 text-sm cursor-pointer']">Accepter</span>
                         </MenuItem>
-                        <MenuItem v-slot="{ active }" v-if="['urgent','active','refused','ignored','done'].includes(index) && ['confirmed','confirmed-owner','waiting'].includes(reservation['resa-confirmation'])">
+                        <MenuItem v-slot="{ active }" v-if="differenceInHours(new Date(reservation.arrival),now) >= 0 && ['confirmed','confirmed-owner','waiting'].includes(reservation['resa-confirmation'])">
                           <span @click="denyResa(reservation.id)" :class="[active ? 'bg-gray-100 text-gray-900' : 'text-gray-700', 'block px-4 py-2 text-sm cursor-pointer']">Refuser</span>
                         </MenuItem>
                       </div>
