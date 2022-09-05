@@ -20,6 +20,14 @@ class UserService {
       }
     })
   }
+  getOccupations() {
+    return axios.get(API_URL + `get_occupations`, { headers: authHeader() }).catch(({response}) => {
+      if (response.status === 403) {
+        store.dispatch("auth/logout");
+        router.push("/login");
+      }
+    })
+  }
   getPublicContent() {
     return axios.get(API_URL + 'all');
   }

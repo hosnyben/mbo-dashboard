@@ -34,21 +34,22 @@
 						<label class="block text-sm font-medium text-gray-700 mb-1">Établissement occupé du</label>
 
             <div class="flex items-center space-x-2">
-							<Datepicker range :minDate="today" v-model="date" :enableTimePicker="false"></Datepicker>
-							<Datepicker timePicker v-model="date" class="timer"></Datepicker>
+							<Datepicker locale="fr" selectText="Choisir" cancelText="Annuler" :format="formatDay" :minDate="today" v-model="date" :enableTimePicker="false"></Datepicker>
+							<Datepicker locale="fr" selectText="Choisir" cancelText="Annuler" :format="formatHour" timePicker v-model="date" class="timer"></Datepicker>
 						</div>
 					</div>
           <div>
 						<label class="block text-sm font-medium text-gray-700 mb-1">Établissement occupé jusqu'au</label>
 
             <div class="flex items-center space-x-2">
-							<Datepicker range :minDate="today" v-model="date" :enableTimePicker="false"></Datepicker>
-							<Datepicker timePicker v-model="date" class="timer"></Datepicker>
+							<Datepicker locale="fr" selectText="Choisir" cancelText="Annuler" :format="formatDay" :minDate="today" v-model="date" :enableTimePicker="false"></Datepicker>
+							<Datepicker locale="fr" selectText="Choisir" cancelText="Annuler" :format="formatHour" timePicker v-model="date" class="timer"></Datepicker>
 						</div>
 					</div>
 
-          <div>
-            <button type="submit" class="flex w-full justify-center rounded-md border border-transparent bg-primary-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2">Ajouter {{ $route.params.id }}</button>
+          <div class="flex flex-row justify-center space-x-2">
+            <button type="submit" class="rounded-md border border-transparent bg-primary-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2">Ajouter {{ $route.params.id }}</button>
+            <button type="submit" class="rounded-md border border-transparent bg-primary-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2">Ajouter et rester {{ $route.params.id }}</button>
           </div>
         </form>
       </div>
