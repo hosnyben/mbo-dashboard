@@ -51,7 +51,8 @@
               <td class="hidden px-3 py-4 text-sm text-gray-500 lg:table-cell">{{ formatDate(occupation['from-date']) }}</td>
               <td class="hidden px-3 py-4 text-sm text-gray-500 lg:table-cell">{{ formatDate(occupation['to-date']) }}</td>
               <td class="py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
-                <RouterLink class="text-primary-600 hover:text-primary-900" to="/partenaire/occupations/modifier/5">Edit<span class="sr-only">, {{ occupation.name }}</span></RouterLink>
+                <RouterLink class="text-primary-600 hover:text-primary-900 mr-2" :to="`/partenaire/occupations/modifier/${currentOccupation.id}-${index}`">Modifier</RouterLink>
+                <span class="text-primary-600 hover:text-primary-900 cursor-pointer" @click="deleteOccupation(index)">Supprimer</span>
               </td>
             </tr>
           </tbody>
@@ -62,20 +63,19 @@
 </template>
 
 <script setup>
-import { RouterLink } from 'vue-router'
-import userService from '../../services/user.service';
-import format from 'date-fns/format'
-import { fr } from 'date-fns/locale'
+  import { RouterLink } from 'vue-router'
+  import userService from '../../services/user.service';
+  import format from 'date-fns/format'
+  import { fr } from 'date-fns/locale'
 </script>
 <script>
+  import { debounce } from 'lodash';
   export default {
     name: 'Occupations',
     data() {
       return {
         enabled : false,
-        occupations : [{
-          "okok":5454
-        }],
+        occupations : [],
         selectedEtab : 0
       }
     },
@@ -91,7 +91,28 @@ import { fr } from 'date-fns/locale'
       },
       formatDate(date) {
 				return format(new Date(date), 'd MMMM Y à HH:mm',{locale: fr})
-      }
+      },
+      deleteOccupation(index) {
+        this.occupations.forEach(item => {
+          if( item.id === this.selectedEtab ){
+            delete item.occupations[index];
+          }
+          item.occupations = item.occupations.filter(oc => oc);
+        });
+
+        this.deleteOccupationAjax();
+      },
+      deleteOccupationAjax : debounce (async function () {
+        const data = this.occupations.find(({id}) => {
+          return id === this.selectedEtab
+        })
+
+        await userService.updateOccupation(this.selectedEtab,{
+          occupations : data['occupations']
+        }).then(({data}) => {
+          console.log(data);
+        });
+      },2000),
     },
     computed: {
       occupation_label() {
@@ -107,11 +128,11 @@ import { fr } from 'date-fns/locale'
         })
       },
       currentOccupation() {
-        let ocuupations = this.occupations.filter(({id}) => {
+        let occupations = this.occupations.filter(({id}) => {
           return id == this.selectedEtab
         })
 
-        return ocuupations[0] || null;
+        return occupations[0] || null;
       }
     }
   };
