@@ -28,20 +28,8 @@
       </dl>
     </div>
 
-    <div class="xl:hidden my-5">
-      <label for="tabs" class="sr-only">Votre établissement</label>
-      <select id="tabs" name="tabs" class="block w-full rounded-md border-gray-300 focus:border-primary-500 focus:ring-primary-500">
-        <option v-for="project in projects" :key="project.value" :selected="project.value === selectedProject">{{ project.name }}</option>
-      </select>
-    </div>
-    <div class="hidden xl:block my-5">
-      <nav class="isolate flex divide-x divide-gray-200 rounded-lg shadow" aria-label="Tabs">
-        <span v-for="project,index in projects" :key="project.value" @click="selectedProject = project.value" :class="[project.value === selectedProject ? 'text-gray-900' : 'text-gray-500 hover:text-gray-700', index === 0 ? 'rounded-l-lg' : '', index === projects.length - 1 ? 'rounded-r-lg' : '', 'cursor-pointer group relative min-w-0 flex-1 overflow-hidden bg-white py-4 px-4 text-sm font-medium text-center hover:bg-gray-50 focus:z-10']" :aria-current="project.value === selectedProject ? 'page' : undefined">
-          <span>{{ project.name }}</span>
-          <span aria-hidden="true" :class="[project.value === selectedProject ? 'bg-primary-500' : 'bg-transparent', 'absolute inset-x-0 bottom-0 h-0.5']" />
-        </span>
-      </nav>
-    </div>
+    <EtabList v-model="selectedProject" :list="projects" v-if="projects.length > 1" class="mt-5" />
+
     <div class="mt-8 overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg mb-5">
       <table class="min-w-full divide-y divide-gray-300">
         <thead class="bg-gray-50">
@@ -92,75 +80,7 @@
       </nav>
     </div>
   </div>
-  <TransitionRoot as="template" :show="showModal">
-    <Dialog as="div" class="relative z-10" @close="showModal = false">
-      <TransitionChild as="template" enter="ease-out duration-300" enter-from="opacity-0" enter-to="opacity-100" leave="ease-in duration-200" leave-from="opacity-100" leave-to="opacity-0">
-        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" />
-      </TransitionChild>
-
-      <div class="fixed inset-0 z-10 overflow-y-auto">
-        <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
-          <TransitionChild as="template" enter="ease-out duration-300" enter-from="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" enter-to="opacity-100 translate-y-0 sm:scale-100" leave="ease-in duration-200" leave-from="opacity-100 translate-y-0 sm:scale-100" leave-to="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95">
-            <DialogPanel class="relative transform overflow-hidden rounded-lg bg-white pb-4 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg">
-              <div class="overflow-hidden bg-white shadow sm:rounded-lg">
-                <div class="px-4 py-5 sm:px-6">
-                  <DialogTitle as="h3" class="text-lg font-medium leading-6 text-gray-900">{{ selectedResa['full-name'] }} #{{ selectedResa.id }}</DialogTitle>
-                  <p class="mt-1 max-w-2xl text-sm text-gray-500">Date de réservation 
-                    <time :datetime="dateDisplay(selectedResa.arrival,selectedResa.departure)[0]">{{ dateDisplay(selectedResa.arrival,selectedResa.departure)[0] }}</time>
-                    <time :datetime="dateDisplay(selectedResa.arrival,selectedResa.departure)[1]" v-if="dateDisplay(selectedResa.arrival,selectedResa.departure)[1]"> - {{ dateDisplay(selectedResa.arrival,selectedResa.departure)[1] }}</time>
-                  </p>
-                  <span class="mr-2 inline-block flex-shrink-0 rounded-full px-2 py-0.5 text-xs font-medium bg-primary-100 text-white">{{ selectedResa.project}}</span>
-                </div>
-                <div class="border-t border-gray-200">
-                  <dl>
-                    <div class="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                      <dt class="text-sm font-medium text-gray-500">Nom complet</dt>
-                      <dd class="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">{{ selectedResa['full-name'] }}</dd>
-                    </div>
-                    <div class="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                      <dt class="text-sm font-medium text-gray-500">Adresse E-mail</dt>
-                      <dd class="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">{{ selectedResa.email }}</dd>
-                    </div>
-                    <div class="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                      <dt class="text-sm font-medium text-gray-500">Téléphone</dt>
-                      <dd class="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">{{ selectedResa['country-phone'] }}{{ selectedResa.phone }}</dd>
-                    </div>
-                    <div class="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                      <dt class="text-sm font-medium text-gray-500">Nombre de personnes</dt>
-                      <dd class="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">{{ selectedResa['nbr-adult'] }} Adultes - {{ selectedResa['nbr-children'] || 0 }} Enfants</dd>
-                    </div>
-                    <div class="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                      <dt class="text-sm font-medium text-gray-500">Commentaire du client</dt>
-                      <dd class="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0 italic">{{ selectedResa.comments || 'Aucun' }}</dd>
-                    </div>
-                    <div class="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                      <dt class="text-sm font-medium text-gray-500">Détails</dt>
-                      <dd class="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">
-                        <ul role="list" class="divide-y divide-gray-200 rounded-md border border-gray-200" v-if="selectedResa.fields">
-                          <li class="flex items-center justify-between py-3 pl-3 pr-4 text-sm" v-for="(field,index) in selectedResa.fields" :key="index">
-                            <div class="flex w-0 flex-1 items-center">
-                              <span class="ml-2 w-0 flex-1">{{ field.placeholder }}</span>
-                            </div>
-                            <div class="ml-4 flex-shrink-0">
-                              <span class="ml-2 w-0 flex-1">{{ field.value }}</span>
-                            </div>
-                          </li>
-                        </ul>
-                        <span v-else class="italic">Aucuns</span>
-                      </dd>
-                    </div>
-                  </dl>
-                </div>
-              </div>
-              <div class="mt-5 flex flex-col items-center">
-                <button type="button" class="inline-flex justify-center rounded-md border border-transparent bg-primary-600 px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 sm:col-start-2 sm:text-sm" @click="showModal = false">Fermer</button>
-              </div>
-            </DialogPanel>
-          </TransitionChild>
-        </div>
-      </div>
-    </Dialog>
-  </TransitionRoot>
+  <Modal :data="selectedResa" :show="showModal" :actions="[{label:'Fermer',method:() => {showModal = false}}]" @close="showModal = false" />
 </template>
 
 <script setup>
@@ -173,8 +93,9 @@ import addMonths from 'date-fns/addMonths'
 import subMonths from 'date-fns/subMonths'
 import isSameMonth from 'date-fns/isSameMonth'
 import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/vue/20/solid'
-import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot} from '@headlessui/vue'
 import compareAsc from 'date-fns/compareAsc'
+import Modal from '../Modal.vue'
+import EtabList from '../EtabList.vue'
 </script>
 <script>
   import { debounce } from 'lodash';
@@ -270,15 +191,21 @@ import compareAsc from 'date-fns/compareAsc'
             }).sort((a, b) => {
               return compareAsc(new Date(a.arrival),new Date(b.arrival));
             });
+            
             cleanData.forEach(({project,project_id}) => {
-              if( !projects[project_id] ) projects[project_id] = {
+              if( !projects[project_id] && project ) projects[project_id] = {
                 value : project_id,
-                name : project
+                label : project
               }
-  
-              this.projects = Object.values(projects)
-              this.selectedProject = this.projects[0].value
             })
+
+            this.projects = Object.values(projects).sort(function(a, b) {
+              var textA = a.label.toUpperCase();
+              var textB = b.label.toUpperCase();
+              return (textA < textB) ? -1 : (textA > textB) ? 1 : 0;
+            });
+
+            this.selectedProject = this.projects[0].value
             return cleanData
           });
       },2000),

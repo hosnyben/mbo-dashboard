@@ -59,9 +59,10 @@
             <img class="h-8 w-auto" src="@/assets/logo.svg" alt="Workflow" />
           </div>
           <nav class="mt-5 flex-1 space-y-1 px-2">
-            <RouterLink v-for="item in navigation" :key="item.name" :class="[current(item) ? 'bg-gray-900 text-white' : 'text-gray-300 hover:bg-gray-700 hover:text-white', 'group flex items-center px-2 py-2 text-sm font-medium rounded-md']" :to="item.href">
-              <component :is="item.icon" :class="[item.current ? 'text-gray-300' : 'text-gray-400 group-hover:text-gray-300', 'mr-3 flex-shrink-0 h-6 w-6']" aria-hidden="true" />
+            <RouterLink v-for="item in navigation" :key="item.name" :class="[current(item) ? 'bg-gray-900 text-white' : 'text-gray-300 hover:bg-gray-700 hover:text-white', 'relative group flex items-center px-2 py-2 text-sm font-medium rounded-md']" :to="item.href">
+              <component :is="item.icon" :class="[current(item) ? 'text-gray-300' : 'text-gray-400 group-hover:text-gray-300', 'mr-3 flex-shrink-0 h-6 w-6']" aria-hidden="true" />
               {{ item.name }}
+              <span v-if="item.count" class="bg-red-400 text-gray-900 hidden ml-3 py-0.5 px-2.5 rounded-full text-xs font-medium md:inline-block">{{ item.count }}</span>
             </RouterLink>
           </nav>
         </div>
@@ -136,3 +137,15 @@ const sidebarOpen = ref(false)
     }
   };
 </script>
+<style>
+  a.urgent:before {
+    content: '';
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: red;
+    position: absolute;
+    right: 5px;
+    top: 5px;
+}
+</style>

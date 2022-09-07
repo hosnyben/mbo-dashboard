@@ -52,10 +52,11 @@
             </span>
           </nav>
         </div>
+        <EtabList v-model="currentProject" :list="projects" v-if="projects.length > 1" class="mt-5" />
         <div v-for="(resas,index) in dayResa" :key="index">
           <div class="pb-4 mb-4" v-if="index === currentResaType">
             <ol class="mt-4 space-y-1 text-sm leading-6 text-gray-500" v-if="resas.resas.length">
-              <li v-for="reservation in resas.resas" :key="reservation.id" class="group flex items-center space-x-4 rounded-xl py-2 px-4 focus-within:bg-white hover:bg-white">
+              <li v-for="reservation in resas.resas.filter( item => item.project_id === currentProject )" :key="reservation.id" class="group flex items-center space-x-4 rounded-xl py-2 px-4 focus-within:bg-white hover:bg-white">
                 <!-- <img :src="meeting.imageUrl" alt="" class="h-10 w-10 flex-none rounded-full" /> -->
                 <div class="flex-auto">
                   <p class="text-gray-900 font-semibold">
@@ -101,82 +102,12 @@
       </div>
     </section>
   </div>
-  <TransitionRoot as="template" :show="showModal">
-    <Dialog as="div" class="relative z-10" @close="showModal = false">
-      <TransitionChild as="template" enter="ease-out duration-300" enter-from="opacity-0" enter-to="opacity-100" leave="ease-in duration-200" leave-from="opacity-100" leave-to="opacity-0">
-        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" />
-      </TransitionChild>
-
-      <div class="fixed inset-0 z-10 overflow-y-auto">
-        <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
-          <TransitionChild as="template" enter="ease-out duration-300" enter-from="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" enter-to="opacity-100 translate-y-0 sm:scale-100" leave="ease-in duration-200" leave-from="opacity-100 translate-y-0 sm:scale-100" leave-to="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95">
-            <DialogPanel class="relative transform overflow-hidden rounded-lg bg-white pb-4 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg">
-              <div class="overflow-hidden bg-white shadow sm:rounded-lg">
-                <div class="px-4 py-5 sm:px-6">
-                  <DialogTitle as="h3" class="text-lg font-medium leading-6 text-gray-900">{{ selectedResa['full-name'] }} #{{ selectedResa.id }}</DialogTitle>
-                  <p class="mt-1 max-w-2xl text-sm text-gray-500">Date de réservation 
-                    <time :datetime="dateDisplay(selectedResa.arrival,selectedResa.departure)[0]">{{ dateDisplay(selectedResa.arrival,selectedResa.departure)[0] }}</time>
-                    <time :datetime="dateDisplay(selectedResa.arrival,selectedResa.departure)[1]" v-if="dateDisplay(selectedResa.arrival,selectedResa.departure)[1]"> - {{ dateDisplay(selectedResa.arrival,selectedResa.departure)[1] }}</time>
-                  </p>
-                  <span class="mr-2 inline-block flex-shrink-0 rounded-full px-2 py-0.5 text-xs font-medium bg-red-100 text-red-800" v-if="selectedResa.urgent">Dernière minute</span>
-                  <span class="mr-2 inline-block flex-shrink-0 rounded-full px-2 py-0.5 text-xs font-medium" :class="confirmationLabel[selectedResa['resa-confirmation']].class">{{confirmationLabel[selectedResa['resa-confirmation']].text}}</span>
-                  <span class="ml-2 inline-block flex-shrink-0 rounded-full px-2 py-0.5 text-xs font-medium bg-primary-100 text-white">{{ selectedResa.project}}</span>
-                </div>
-                <div class="border-t border-gray-200">
-                  <dl>
-                    <div class="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                      <dt class="text-sm font-medium text-gray-500">Nom complet</dt>
-                      <dd class="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">{{ selectedResa['full-name'] }}</dd>
-                    </div>
-                    <div class="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                      <dt class="text-sm font-medium text-gray-500">Adresse E-mail</dt>
-                      <dd class="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">{{ selectedResa.email }}</dd>
-                    </div>
-                    <div class="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                      <dt class="text-sm font-medium text-gray-500">Téléphone</dt>
-                      <dd class="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">{{ selectedResa['country-phone'] }}{{ selectedResa.phone }}</dd>
-                    </div>
-                    <div class="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                      <dt class="text-sm font-medium text-gray-500">Nombre de personnes</dt>
-                      <dd class="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">{{ selectedResa['nbr-adult'] }} Adultes - {{ selectedResa['nbr-children'] || 0 }} Enfants</dd>
-                    </div>
-                    <div class="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                      <dt class="text-sm font-medium text-gray-500">Commentaire du client</dt>
-                      <dd class="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0 italic">{{ selectedResa.comments || 'Aucun' }}</dd>
-                    </div>
-                    <div class="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                      <dt class="text-sm font-medium text-gray-500">Détails</dt>
-                      <dd class="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">
-                        <ul role="list" class="divide-y divide-gray-200 rounded-md border border-gray-200" v-if="selectedResa.fields">
-                          <li class="flex items-center justify-between py-3 pl-3 pr-4 text-sm" v-for="(field,index) in selectedResa.fields" :key="index">
-                            <div class="flex w-0 flex-1 items-center">
-                              <span class="ml-2 w-0 flex-1">{{ field.placeholder }}</span>
-                            </div>
-                            <div class="ml-4 flex-shrink-0">
-                              <span class="ml-2 w-0 flex-1">{{ field.value }}</span>
-                            </div>
-                          </li>
-                        </ul>
-                        <span v-else class="italic">Aucuns</span>
-                      </dd>
-                    </div>
-                  </dl>
-                </div>
-              </div>
-              <div class="mt-5 flex flex-col items-center">
-                <button type="button" class="inline-flex justify-center rounded-md border border-transparent bg-primary-600 px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 sm:col-start-2 sm:text-sm" @click="showModal = false">Fermer</button>
-              </div>
-            </DialogPanel>
-          </TransitionChild>
-        </div>
-      </div>
-    </Dialog>
-  </TransitionRoot>
+  <Modal :data="selectedResa" :show="showModal" :actions="[{label:'Fermer',method:() => {showModal = false}}]" @close="showModal = false" :confirmationLabel="confirmationLabel" :allowcomment="true" />
 </template>
 
 <script setup>
 import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/vue/20/solid'
-import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot,Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue'
+import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue'
 import { EllipsisVerticalIcon } from '@heroicons/vue/24/outline'
 import startOfToday from 'date-fns/startOfToday'
 import startOfMonth from 'date-fns/startOfMonth'
@@ -196,6 +127,8 @@ import userService from '../../services/user.service'
 import isSameHour from 'date-fns/isSameHour'
 import compareAsc from 'date-fns/compareAsc'
 import differenceInHours from 'date-fns/differenceInHours'
+import Modal from '../Modal.vue'
+import EtabList from '../EtabList.vue'
 
 </script>
 <script>
@@ -233,7 +166,8 @@ import differenceInHours from 'date-fns/differenceInHours'
           }
         },
         currentResaType: 'active',
-        now : Date.now()
+        now : Date.now(),
+        currentProject : null
       };
     },
     mounted() {
@@ -270,6 +204,8 @@ import differenceInHours from 'date-fns/differenceInHours'
           this.loading = false;
           return data
         });
+
+        this.currentProject = this.projects[0].value;
       },2000),
       async confirmResa(id) {
         await userService.updateReservation(id,{'resa-confirmation':'confirmed-owner'}).then(({data}) => {
@@ -318,6 +254,9 @@ import differenceInHours from 'date-fns/differenceInHours'
         }
 
         return data;
+      },
+      array_unique(arr) {
+        return [...new Set(arr)];
       }
 		},
     computed: {
@@ -327,14 +266,14 @@ import differenceInHours from 'date-fns/differenceInHours'
         }).map(resa => {
           return {...resa,...{urgent:isSameDay(new Date(resa.created_at),new Date(resa.arrival))}};
         }).sort((a, b) => {
-            return compareAsc(new Date(a.arrival),new Date(b.arrival));
+          return compareAsc(new Date(a.arrival),new Date(b.arrival));
         });
 
         return {
           urgent : {
             label : 'Urgentes',
             resas : reservations.filter(resa => {
-              return differenceInHours(new Date(resa.arrival),this.now) >= 0 && !['not-confirmed','not-confirmed-owner'].includes(resa['resa-confirmation']) && resa.urgent
+              return differenceInHours(new Date(resa.arrival),this.now) >= 0 && resa['resa-confirmation'] === 'waiting' && resa.urgent
             })
           },
           active : {
@@ -395,7 +334,23 @@ import differenceInHours from 'date-fns/differenceInHours'
 			},
 			fullDigitDate() {
 				return format(this.currentDay || startOfToday(), 'Y-L-d')
-			}
+			},
+      projects() {
+        let projects = {}
+          
+        this.dayResa[this.currentResaType].resas.forEach(({project,project_id}) => {
+          if( !projects[project_id] ) projects[project_id] = {
+            label : project,
+            value : project_id
+          }
+        })
+
+        return Object.values(projects).sort(function(a, b) {
+          var textA = a.label.toUpperCase();
+          var textB = b.label.toUpperCase();
+          return (textA < textB) ? -1 : (textA > textB) ? 1 : 0;
+        });
+      }
     }
   };
 </script>

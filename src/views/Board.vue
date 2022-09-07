@@ -1,6 +1,6 @@
 <template>
   <Dashboard>
-    <component v-bind:is="currentcontent"></component>
+    <component ref="document" v-bind:is="currentcontent" :type="this.$route.name"></component>
   </Dashboard>
 </template>
   
@@ -8,10 +8,16 @@
 import Dashboard from '../components/Dashboard.vue'
 import Welcome from '../components/dashboard/Welcome.vue'
 import Reservations from '../components/dashboard/Reservations.vue'
-import {CalendarIcon,CheckCircleIcon,XCircleIcon,ScaleIcon} from '@heroicons/vue/24/outline'
-import Occupations from '../components/dashboard/Occupations.vue';
-import EditOccupationVue from '../components/dashboard/EditOccupation.vue';
-import StatsVue from '../components/dashboard/Stats.vue';
+import ToConfirm from '../components/dashboard/ToConfirm.vue'
+import Occupations from '../components/dashboard/Occupations.vue'
+import EditOccupationVue from '../components/dashboard/EditOccupation.vue'
+import StatsVue from '../components/dashboard/Stats.vue'
+import differenceInHours from 'date-fns/differenceInHours'
+import isSameDay from 'date-fns/isSameDay'
+import startOfToday from 'date-fns/startOfToday'
+import userService from '../services/user.service'
+import format from 'date-fns/format'
+import compareAsc from 'date-fns/compareAsc'
 </script>
 <script>
   export default {
@@ -25,7 +31,10 @@ import StatsVue from '../components/dashboard/Stats.vue';
           'partner_closing_new' : EditOccupationVue,
           'partner_closing_edit' : EditOccupationVue,
           'partner_stats' : StatsVue,
-        }
+          'partner_calendar_confirm' : ToConfirm,
+          'partner_calendar_urgent' : ToConfirm,
+        },
+        now : Date.now()
       };
     },
     computed : {
@@ -34,30 +43,36 @@ import StatsVue from '../components/dashboard/Stats.vue';
       }
     },  
     mounted() {
-      this.$store.commit('setNavigation',[
-        { name: 'Reservations', href: '/partenaire/reservations', icon: CalendarIcon, description: 'Agenda des réservations effectuées sur marrakechbestof.com' },
-        { name: 'Occupations', href: '/partenaire/occupations', icon: XCircleIcon, description: 'Ajouter les dates d\'occupation quand vous ne serez pas en mesure de traiter les réservations.' },
-        // { name: 'Liste des réservations traitées', href: '#', icon: CheckCircleIcon, description: 'Liste des réservations traitées par mois.' },
-        { name: 'Statistiques', href: '/partenaire/statistiques', icon: CheckCircleIcon, description: 'Liste des réservations traitées par mois.' },
-        // { name: 'Directory', href: '#', icon: MagnifyingGlassCircleIcon, current: false },
-        // { name: 'Announcements', href: '#', icon: MegaphoneIcon, current: false },
-        // { name: 'Office Map', href: '#', icon: MapIcon, current: false },
-      ])
-      /*
-      UserService.getPublicContent().then(
-        (response) => {
-          this.content = response.data;
-        },
-        (error) => {
-          this.content =
-            (error.response &&
-              error.response.data &&
-              error.response.data.message) ||
-            error.message ||
-            error.toString();
-        }
-      );
-      */
+      this.$store.dispatch('updateNavigation');
+
+      const today = startOfToday();
+      this.getReservations(today);
+
+      setInterval(() => {
+        this.now = Date.now();
+        this.getReservations(today);
+      }, 1000*60*5); // Refresh in 10 minutes
     },
+    methods: {
+      async getReservations(day) {
+        const resas = await userService.getReservations(format(day, 'Y'),format(day, 'M')).then(({data}) => {
+          return data.map(resa => {
+            return {...resa,...{urgent:isSameDay(new Date(resa.created_at),new Date(resa.arrival))}};
+          }).filter(resa => {
+            return differenceInHours(new Date(resa.arrival),this.now) >= 0
+          }).sort((a, b) => {
+            return compareAsc(new Date(a.arrival),new Date(b.arrival));
+          });
+        })
+        this.$store.dispatch('setUrgentResas', resas.filter(resa => {
+          return resa['resa-confirmation'] === 'waiting' && resa.urgent
+        }));
+        this.$store.commit('setConfirmResas', resas.filter(resa => {
+          return resa['resa-confirmation'] === 'waiting' && !resa.urgent
+        }));
+
+        this.$store.dispatch('updateNavigation');
+      }
+    }
   };
 </script>
