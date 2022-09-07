@@ -66,7 +66,7 @@
                   </p>
                   <p class="mt-0.5">
                     <time :datetime="dateDisplay(reservation.arrival,reservation.departure)[0]">{{ dateDisplay(reservation.arrival,reservation.departure)[0] }}</time>
-                    <time :datetime="dateDisplay(reservation.arrival,reservation.departure)[1]" v-if="dateDisplay(reservation.arrival,reservation.departure)[1] && dateDisplay(reservation.arrival,reservation.departure)[0] !== dateDisplay(reservation.arrival,reservation.departure)[1]"> - {{ dateDisplay(reservation.arrival,reservation.departure)[1] }}</time>
+                    <time :datetime="dateDisplay(reservation.arrival,reservation.departure)[1]" v-if="dateDisplay(reservation.arrival,reservation.departure)[1]"> - {{ dateDisplay(reservation.arrival,reservation.departure)[1] }}</time>
                   </p>
                 </div>
                 <Menu as="div" class="relative opacity-0 focus-within:opacity-100 group-hover:opacity-100">
@@ -199,11 +199,12 @@ import differenceInHours from 'date-fns/differenceInHours'
 
 </script>
 <script>
+  import { debounce } from 'lodash';
   export default {
     name: 'Reservations',
     data() {
       return {
-        currentDay: null,
+        currentDay: new Date(),
 				currentMonth: null,
         reservations: [],
         selectedResa: {},
@@ -260,13 +261,16 @@ import differenceInHours from 'date-fns/differenceInHours'
 				if (next) this.setCurrentDay(addMonths(this.currentDay,1));
 				else this.setCurrentDay(subMonths(this.currentDay,1));
 			},
-      async getReservations(day) {
+      getReservations(day) {
         this.loading = true;
+        this.getReservationsAjax(day);
+      },
+      getReservationsAjax : debounce(async function(day) {
         this.reservations = await userService.getReservations(format(day, 'Y'),format(day, 'M')).then(({data}) => {
           this.loading = false;
           return data
         });
-      },
+      },2000),
       async confirmResa(id) {
         await userService.updateReservation(id,{'resa-confirmation':'confirmed-owner'}).then(({data}) => {
           if( data ){
@@ -299,14 +303,21 @@ import differenceInHours from 'date-fns/differenceInHours'
         from = new Date(from);
         to = new Date(to);
 
+        let data = [];
+
         if( isSameDay(from,to) )
-          return [format(from,'HH:mm'),format(to,'HH:mm')]
-        else {
-          if( isSameHour(from,to) )
-            return [format(from,'dd-MM-yyyy à HH:mm'),null]
+          data.push(format(from,'HH:mm'))
+        else
+          data.push(format(from,'dd-MM-yyyy à HH:mm'))
+
+        if( !isSameHour(from,to) ){
+          if( isSameDay(from,to) )
+            data.push(format(to,'HH:mm'))
           else
-            return [format(from,'dd-MM-yyyy à HH:mm'),format(to,'dd-MM-yyyy à HH:mm')]
+            data.push(format(to,'dd-MM-yyyy à HH:mm'))
         }
+
+        return data;
       }
 		},
     computed: {

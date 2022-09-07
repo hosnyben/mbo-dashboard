@@ -9,23 +9,23 @@
         <RouterLink class="inline-flex items-center justify-center rounded-md border border-transparent bg-primary-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 sm:w-auto" to="/partenaire/occupations/nouvelle">Nouvelle occcupation</RouterLink>
       </div>
     </div>
-    <div  v-if="currentOccupation">
-      <div class="sm:hidden my-5">
+    <div v-if="currentOccupation">
+      <div class="xl:hidden my-5">
         <label for="tabs" class="sr-only">Votre établissement</label>
         <!-- Use an "onChange" listener to redirect the user to the selected tab URL. -->
         <select id="tabs" name="tabs" class="block w-full rounded-md border-gray-300 focus:border-primary-500 focus:ring-primary-500">
           <option v-for="tab in tabs" :key="tab.id" :selected="tab.current">{{ tab.name }}</option>
         </select>
       </div>
-      <div class="hidden sm:block my-5">
+      <div class="hidden xl:block my-5">
         <nav class="isolate flex divide-x divide-gray-200 rounded-lg shadow" aria-label="Tabs">
-          <span v-for="tab,index in tabs" :key="tab.name" @click="selectedEtab = tab.id" :class="[tab.current ? 'text-gray-900' : 'text-gray-500 hover:text-gray-700', index === 0 ? 'rounded-l-lg' : '', index === tabs.length - 1 ? 'rounded-r-lg' : '', 'cursor-pointer group relative min-w-0 flex-1 overflow-hidden bg-white py-4 px-4 text-sm font-medium text-center hover:bg-gray-50 focus:z-10']" :aria-current="index === selectedEtab ? 'page' : undefined">
+          <span v-for="tab,index in tabs" :key="tab.name" @click="selectedEtab = tab.id" :class="[tab.current ? 'text-gray-900' : 'text-gray-500 hover:text-gray-700', index === 0 ? 'rounded-l-lg' : '', index === tabs.length - 1 ? 'rounded-r-lg' : '', 'cursor-pointer group relative min-w-0 flex-1 overflow-hidden bg-white py-4 px-4 text-sm font-medium text-center hover:bg-gray-50 focus:z-10']" :aria-current="tab.current ? 'page' : undefined">
             <span>{{ tab.name }}</span>
             <span aria-hidden="true" :class="[tab.current ? 'bg-primary-500' : 'bg-transparent', 'absolute inset-x-0 bottom-0 h-0.5']" />
           </span>
         </nav>
       </div>
-      <div class="-mx-4 mt-8 overflow-hidden shadow ring-1 ring-black ring-opacity-5 sm:-mx-6 md:mx-0 md:rounded-lg mb-5">
+      <div class=" mt-8 overflow-hidden shadow ring-1 ring-black ring-opacity-5 sm:-mx-0 md:mx-0 md:rounded-lg mb-5">
         <table class="min-w-full divide-y divide-gray-300">
           <thead class="bg-gray-50">
             <tr>
