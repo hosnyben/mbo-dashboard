@@ -43,7 +43,7 @@
         </div>
         <div class="hidden sm:block">
           <nav class="isolate flex divide-x divide-gray-200 rounded-lg shadow" aria-label="Tabs">
-            <span v-for="(resas,index) in dayResa" :key="index" @click="currentResaType = index" :class="[currentResaType === index ? 'text-gray-900' : 'text-gray-500 hover:text-gray-700', index === 'urgent' ? 'rounded-l-lg' : '', index === Object.keys(dayResa)[Object.keys(dayResa).length - 1] ? 'rounded-r-lg' : '', 'cursor-pointer group relative min-w-0 flex-1 overflow-hidden bg-white py-4 px-1 text-sm font-medium text-center hover:bg-gray-50 focus:z-10']" :aria-current="currentResaType === index ? 'page' : undefined">
+            <span v-for="(resas,index) in dayResa" :key="index" @click="changeType(index)" :class="[currentResaType === index ? 'text-gray-900' : 'text-gray-500 hover:text-gray-700', index === 'urgent' ? 'rounded-l-lg' : '', index === Object.keys(dayResa)[Object.keys(dayResa).length - 1] ? 'rounded-r-lg' : '', 'cursor-pointer group relative min-w-0 flex-1 overflow-hidden bg-white py-4 px-1 text-sm font-medium text-center hover:bg-gray-50 focus:z-10']" :aria-current="currentResaType === index ? 'page' : undefined">
               <span>
                 {{ resas.label }}
                 <span :class="[currentResaType === index ? 'bg-primary-100 text-white' : 'bg-gray-100 text-gray-900', 'hidden ml-3 py-0.5 px-2.5 rounded-full text-xs font-medium md:inline-block']">{{ resas.resas.length }}</span>
@@ -187,6 +187,10 @@ import EtabList from '../EtabList.vue'
         }
 
 				this.currentDay = day;
+        
+        // if( this.currentMonth & isSameMonth(this.currentDay,day) ){
+          this.resetCurrentProject();
+        // }
 			},
 			setCurrentMonth(day) {
 				this.currentMonth = getMonth(day);
@@ -205,7 +209,7 @@ import EtabList from '../EtabList.vue'
           return data
         });
 
-        this.currentProject = this.projects[0].value;
+        this.currentProject = this.projects[0] ? this.projects[0].value : null;
       },2000),
       async confirmResa(id) {
         await userService.updateReservation(id,{'resa-confirmation':'confirmed-owner'}).then(({data}) => {
@@ -257,6 +261,14 @@ import EtabList from '../EtabList.vue'
       },
       array_unique(arr) {
         return [...new Set(arr)];
+      },
+      changeType(index) {
+        this.currentResaType = index;
+        this.resetCurrentProject()
+      },
+      resetCurrentProject() {
+        if( this.projects.length && !this.projects.find(({value}) =>  this.currentProject === value) )
+          this.currentProject = this.projects[0].value;
       }
 		},
     computed: {
@@ -339,17 +351,23 @@ import EtabList from '../EtabList.vue'
         let projects = {}
           
         this.dayResa[this.currentResaType].resas.forEach(({project,project_id}) => {
-          if( !projects[project_id] ) projects[project_id] = {
+          if( !projects[project_id] && project ) projects[project_id] = {
             label : project,
             value : project_id
           }
         })
 
-        return Object.values(projects).sort(function(a, b) {
+        projects =  Object.values(projects).sort(function(a, b) {
           var textA = a.label.toUpperCase();
           var textB = b.label.toUpperCase();
           return (textA < textB) ? -1 : (textA > textB) ? 1 : 0;
         });
+
+        return projects.map(item => {
+          return {...item,...{ count : this.dayResa[this.currentResaType]?.resas.filter(({project_id}) => {
+            return project_id === item.value
+          }).length }}
+        })
       }
     }
   };

@@ -31,7 +31,7 @@ export default {
                 { current : router.path === '/partenaire/reservations-urgentes',name: 'Réservations Urgentes', href: '/partenaire/reservations-urgentes', icon: FireIcon, description: 'Agenda des réservations effectuées sur marrakechbestof.com', count: state.urgentResas.length },
                 { current : router.path === '/partenaire/reservations-a-confirmer',name: 'Réservations à confirmer', href: '/partenaire/reservations-a-confirmer', icon: Bars3BottomRightIcon, description: 'Agenda des réservations effectuées sur marrakechbestof.com', count: state.confirmResas.length }
             ] : [];
-            const userMenu = JSON.parse(localStorage.user).user_role !== 'administrator' ? [{ current : router.path === '/partenaire/occupations',name: 'Occupations', href: '/partenaire/occupations', icon: XCircleIcon, description: 'Ajouter les dates d\'occupation quand vous ne serez pas en mesure de traiter les réservations.' }] : [];
+            const userMenu =  [{ current : router.path === '/partenaire/occupations',name: 'Occupations', href: '/partenaire/occupations', icon: XCircleIcon, description: 'Ajouter les dates d\'occupation quand vous ne serez pas en mesure de traiter les réservations.' }]
     
             commit('setNavigation',[
                 ...adminMenu,
