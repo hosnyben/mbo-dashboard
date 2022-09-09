@@ -32,6 +32,7 @@ import compareAsc from 'date-fns/compareAsc'
           'partner_closing_edit' : EditOccupationVue,
           'partner_stats' : StatsVue,
           'partner_calendar_confirm' : ToConfirm,
+          'partner_calendar_confirmed' : ToConfirm,
           'partner_calendar_urgent' : ToConfirm,
         },
         now : Date.now()
@@ -43,6 +44,7 @@ import compareAsc from 'date-fns/compareAsc'
       }
     },  
     mounted() {
+      this.getOffers();
       this.$store.dispatch('updateNavigation');
 
       const today = startOfToday();
@@ -70,8 +72,25 @@ import compareAsc from 'date-fns/compareAsc'
         this.$store.commit('setConfirmResas', resas.filter(resa => {
           return resa['resa-confirmation'] === 'waiting' && !resa.urgent
         }));
+        this.$store.commit('setConfirmedResas', resas.filter(resa => {
+          return ['confirmed','confirmed-owner'].includes(resa['resa-confirmation'])
+        }));
 
         this.$store.dispatch('updateNavigation');
+      },
+      async getOffers() {
+        const projects = await userService.getOffers().then(({data}) => {
+          const offers = data.map(({id,name}) => {
+            return {
+              value : id,
+              label : name
+            }
+          })
+          
+          return offers
+        })
+
+        this.$store.commit('setOffers', projects);
       }
     }
   };

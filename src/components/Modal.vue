@@ -8,7 +8,7 @@
       <div class="fixed inset-0 z-10 overflow-y-auto">
         <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
           <TransitionChild as="template" enter="ease-out duration-300" enter-from="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" enter-to="opacity-100 translate-y-0 sm:scale-100" leave="ease-in duration-200" leave-from="opacity-100 translate-y-0 sm:scale-100" leave-to="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95">
-            <DialogPanel class="relative transform overflow-hidden rounded-lg bg-white pb-4 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg">
+            <DialogPanel class="relative transform overflow-hidden rounded-lg bg-white pb-4 text-left shadow-xl transition-all sm:my-8 sm:w-full max-w-3xl">
               <div class="overflow-hidden bg-white shadow sm:rounded-lg">
                 <div class="px-4 py-5 sm:px-6">
                   <DialogTitle as="h3" class="text-lg font-medium leading-6 text-gray-900">{{ data['full-name'] }} #{{ data.id }}</DialogTitle>
@@ -18,7 +18,18 @@
                   </p>
                   <span class="mr-2 inline-block flex-shrink-0 rounded-full px-2 py-0.5 text-xs font-medium bg-red-100 text-red-800" v-if="data.urgent">Dernière minute</span>
                   <span v-if="confirmationLabel[data['resa-confirmation']]" class="mr-2 inline-block flex-shrink-0 rounded-full px-2 py-0.5 text-xs font-medium" :class="confirmationLabel[data['resa-confirmation']].class">{{confirmationLabel[data['resa-confirmation']].text}}</span>
-                  <span class="ml-2 inline-block flex-shrink-0 rounded-full px-2 py-0.5 text-xs font-medium bg-primary-100 text-white">{{ data.project}}</span>
+                  <span class="inline-block flex-shrink-0 rounded-full px-2 py-0.5 text-xs font-medium bg-primary-100 text-white">{{ data.project_name}}</span>
+                </div>
+                <div class="px-4 pb-4 sm:px-6" v-if="isAdmin && resaType && resaType !== 'partner_calendar_confirmed'">
+                  <SwitchGroup as="div" class="flex items-center">
+                    <Switch v-model="editMode" :class="[editMode ? 'bg-primary-600' : 'bg-gray-200', 'relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2']">
+                      <span aria-hidden="true" :class="[editMode ? 'translate-x-5' : 'translate-x-0', 'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out']" />
+                    </Switch>
+                    <SwitchLabel as="span" class="ml-3">
+                      <span class="text-sm font-medium text-gray-900">Modifier réservation</span>
+                      <!-- <span class="text-sm text-gray-500">(Save 10%)</span> -->
+                    </SwitchLabel>
+                  </SwitchGroup>
                 </div>
                 <div class="border-t border-gray-200">
                   <dl>
@@ -28,21 +39,51 @@
                     </div>
                     <div class="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
                       <dt class="text-sm font-medium text-gray-500">Adresse E-mail</dt>
-                      <dd class="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">{{ data.email }}</dd>
+                      <dd class="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">
+                        <input v-if="editMode" type="text" v-model="data.email" class="w-56 block rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm" placeholder="Adresse e-mail" />
+                        <span v-else>{{ data.email }}</span>
+                      </dd>
                     </div>
                     <div class="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                      <dt class="text-sm font-medium text-gray-500">Établissement</dt>
+                      <dd class="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">
+                        <EtabList v-if="editMode && offers.length > 1" v-model="data.project" :list="offers" />
+                        <span v-else>{{ offers.find(({value}) => value === data.project)?.label }}</span>
+                      </dd>
+                    </div>
+                    <div class="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
                       <dt class="text-sm font-medium text-gray-500">Téléphone</dt>
-                      <dd class="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">{{ data['country-phone'] }}{{ data.phone }}</dd>
-                    </div>
-                    <div class="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                      <dt class="text-sm font-medium text-gray-500">Nombre de personnes</dt>
-                      <dd class="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">{{ data['nbr-adult'] }} Adultes - {{ data['nbr-children'] || 0 }} Enfants</dd>
+                      <dd class="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">
+                        <div v-if="editMode" class="md:flex items-center space-x-2">
+      	                  <input type="text" v-model="data['country-phone']" class="w-12 block rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm" placeholder="212" />
+      	                  <input type="text" v-model="data.phone" class="w-40 block rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm" placeholder="123456789" />
+                        </div>
+                        <span v-else>{{ data['country-phone'] }}{{ data.phone }}</span>
+                      </dd>
                     </div>
                     <div class="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                      <dt class="text-sm font-medium text-gray-500">Commentaire du client</dt>
-                      <dd class="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0 italic">{{ data.comments || 'Aucun' }}</dd>
+                      <dt class="text-sm font-medium text-gray-500">Nombre de personnes</dt>
+                      <dd class="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">
+                        <div v-if="editMode" class="md:flex items-center space-x-10">
+                          <div>
+                            <label class="block text-sm font-medium text-gray-700">Adultes</label>
+                            <input type="text" v-model="data['nbr-adult']" class="mt-1 w-12 block rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm" placeholder="1" />
+                          </div>
+                          <div>
+                            <label class="block text-sm font-medium text-gray-700">Enfants</label>
+                            <input type="text" v-model="data['nbr-children']" class="mt-1 w-12 block rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm" placeholder="0" />
+                          </div>
+                        </div>
+                        <span v-else>{{ data['nbr-adult'] }} Adultes - {{ data['nbr-children'] || 0 }} Enfants</span>
+                      </dd>
                     </div>
                     <div class="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                      <dt class="text-sm font-medium text-gray-500">Commentaire du client</dt>
+                      <dd class="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0 italic">
+                        {{ data.comments || 'Aucun' }}
+                      </dd>
+                    </div>
+                    <div class="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
                       <dt class="text-sm font-medium text-gray-500">Détails</dt>
                       <dd class="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">
                         <ul role="list" class="divide-y divide-gray-200 rounded-md border border-gray-200" v-if="data.fields">
@@ -58,18 +99,41 @@
                         <span v-else class="italic">Aucuns</span>
                       </dd>
                     </div>
-                    <div class="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6" v-if="allowcomment">
-                      <dt class="text-sm font-medium text-gray-500">Commentaire du Staff</dt>
+                    <div class="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6" v-if="isAdmin">
+                      <dt class="text-sm font-medium text-gray-500">Commentaire du propriétaire</dt>
                       <dd class="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0 italic">
-												<textarea id="about" name="about" rows="3" class="block w-full max-w-lg rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" v-model="data.team_comment" />
+                        {{data['partner-comment'] || '...'}}
+            					</dd>
+                    </div>
+                    <div class="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6" v-if="isAdmin">
+                      <dt class="text-sm font-medium text-gray-500">Commentaire du staff</dt>
+                      <dd class="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0 italic">
+												<textarea id="about" name="about" rows="3" class="block w-full max-w-lg rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm" v-model="data['inner-comment']" @input="() => {edited = true}" />
+            					</dd>
+                    </div>
+                    <div v-else class="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                      <dt class="text-sm font-medium text-gray-500">Commentaire du propriétaire</dt>
+                      <dd class="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0 italic">
+                        <div v-if="allowcomment">
+                          <textarea id="about" name="about" rows="3" class="block w-full max-w-lg rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm" v-model="data['partner-comment']" @input="() => {edited = true}" />
+                        </div>
+                        <p v-else>Vous n'êtes pas autorisé à commenter sur cette réservation</p>
             					</dd>
                     </div>
                   </dl>
                 </div>
               </div>
-              <div  class="mt-5 flex justify-center">
-                <button v-if="allowcomment" type="button" class="mx-5 inline-flex justify-center rounded-md border border-transparent bg-primary-600 px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 sm:col-start-2 sm:text-sm" @click="updateResaComment">Ajouter commentaire</button>
-                <button v-for="action in actions" type="button" class="mx-5 inline-flex justify-center rounded-md border border-transparent bg-primary-600 px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 sm:col-start-2 sm:text-sm" @click="action.method">{{ action.label }}</button>
+              <div  class="mt-5 flex justify-between px-5">
+                <div v-if="isAdmin && resaType && resaType !== 'partner_calendar_confirmed'" class="flex justify-center space-x-2 mr-10">
+                  <!-- <a target="_blank" class="button tips custom-class" href="https://wa.me/<?php echo str_replace('+','',get_field('country-phone',$post->ID)).get_field("phone",$post->ID) ?>?text=<?php echo $confirmMessage ?>">Confirmer Whatsapp</a> -->
+                  <!-- <a target="_blank" class="button tips custom-class" href="https://wa.me/<?php echo str_replace('+','',get_field('country-phone',$post->ID)).get_field("phone",$post->ID) ?>?text=<?php echo $denyMessage ?>">Refuser Whatsapp</a> -->
+                  <button type="button" class="disabled:bg-gray-100 disabled:cursor-not-allowed inline-flex justify-center rounded-md border border-transparent bg-primary-600 px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 sm:col-start-2 sm:text-sm" @click="wsp(true)"><img class="h-5 mr-2 w-auto" src="@/assets/wsp.svg" alt="Workflow" /> Confirmer</button>
+                  <button type="button" class="disabled:bg-gray-100 disabled:cursor-not-allowed inline-flex justify-center rounded-md border border-transparent bg-primary-600 px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 sm:col-start-2 sm:text-sm" @click="wsp(false)"><img class="h-5 mr-2 w-auto" src="@/assets/wsp.svg" alt="Workflow" /> Refuser</button>
+                </div>
+                <div class="flex justify-center space-x-2">
+                  <button :disabled="loading" v-if="edited" type="button" class="disabled:bg-gray-100 disabled:cursor-not-allowed inline-flex justify-center rounded-md border border-transparent bg-primary-600 px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 sm:col-start-2 sm:text-sm" @click="updateResaData(() => {})">Enregistrer</button>
+                  <button :disabled="loading" v-for="action in actions" type="button" class="disabled:bg-gray-100 disabled:cursor-not-allowed inline-flex justify-center rounded-md border border-transparent bg-primary-600 px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 sm:col-start-2 sm:text-sm" @click="triggerMethod(action.method)">{{(edited) ? 'Modifier et ':''}}{{ action.label }}</button>
+                </div>
               </div>
             </DialogPanel>
           </TransitionChild>
@@ -80,11 +144,13 @@
 </template>
 
 <script setup>
-import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot} from '@headlessui/vue'
+import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot, Switch, SwitchGroup, SwitchLabel } from '@headlessui/vue'
 import format from 'date-fns/format'
 import isSameDay from 'date-fns/isSameDay'
 import isSameHour from 'date-fns/isSameHour'
 import userService from '../services/user.service';
+import EtabList from './EtabList.vue';
+import compareAsc from 'date-fns/compareAsc';
 </script>
 <script>
   export default {
@@ -109,13 +175,53 @@ import userService from '../services/user.service';
 			allowcomment : {
 				type: Boolean,
 				default: false
-			}
+			},
+      resaType : {}
 		},
     data() {
+      return {
+        loading : false,
+        editMode : false,
+        edited : false
+      }
     },
     mounted() {
     },
+    computed: {
+      isAdmin() {
+        return JSON.parse(localStorage.user).user_role === 'administrator' || JSON.parse(localStorage.user).user_role === 'bookagent'
+      },
+      offers() {
+        return this.$store.state.other.offers
+      }
+    },
+    watch: {
+      editMode (val,old) {
+        if( val !== old && !this.edited )
+          this.edited = true;
+      },
+      show(val,old) {
+        this.edited = false;
+        this.editMode = false;
+      }
+    },
 		methods: {
+      wsp(response) {
+        let text;
+        
+        if( response )
+          text = `Bonjour ${this.data['full-name']}, c'est Marrakech Best Of ! Nous venons de vous envoyer la confirmation de réservation par e-mail (Vérifiez dans vos spams si vous n'avez rien reçu). Avez-vous prévu d'autres activités (quad, dromadaire, spa, journée piscine, restaurants, excursions) ? Je suis disponible pour vous conseiller le meilleur à faire pour vos vacances.`;
+        else
+          text = `Bonjour ${this.data['full-name']}, vous venez de réserver sur Marrakech Best Of. Votre réservation a été refusée par l'établissement car c'est complet. Souhaitez vous aller ailleurs ?`;
+        
+        window.open(`https://wa.me/${this.data['country-phone'].replace('+','')}${this.data.phone}?text=${text}`,'_blank');
+      },
+      triggerMethod(method = () => {}){
+        if( this.edited )
+          this.updateResaData(method)
+        else
+          method();
+      },
 			closeModal() {
 				this.$emit('close')
 			},
@@ -139,10 +245,63 @@ import userService from '../services/user.service';
 
         return data;
       },
-      async updateResaComment() {
-        await userService.updateReservation(this.data.id,{'inner-comment':this.data.team_comment}).then(({data}) => {
+      async updateResaData(method = () => {}) {
+        this.loading = true;
+        await userService.updateReservation(this.data.id,this.data).then(({data}) => {
           if( data ){
-            this.closeModal()
+            this.loading = false;
+
+            if( this.resaType ){
+              switch (this.resaType) {
+                case 'partner_calendar_urgent':
+                  this.$store.dispatch(
+                    'setUrgentResas', 
+                    [
+                      ...this.$store.state.other.urgentResas.filter(resa => {
+                        return this.data.id !== resa.id
+                      }),
+                      ...[this.data]
+                    ].sort((a, b) => {
+                      return compareAsc(new Date(a.arrival),new Date(b.arrival))
+                    })
+                  );
+                  break;
+                case 'partner_calendar_confirm':
+                  this.$store.dispatch(
+                    'setConfirmResas', 
+                    [
+                      ...this.$store.state.other.confirmResas.filter(resa => {
+                        return this.data.id !== resa.id
+                      }),
+                      ...[this.data]
+                    ].sort((a, b) => {
+                      return compareAsc(new Date(a.arrival),new Date(b.arrival))
+                    })
+                  );
+                  break;
+                case 'partner_calendar_confirmed':
+                  this.$store.dispatch(
+                    'setConfirmedResas', 
+                    [
+                      ...this.$store.state.other.confirmedResas.filter(resa => {
+                        return this.data.id !== resa.id
+                      }),
+                      ...[this.data]
+                    ].sort((a, b) => {
+                      return compareAsc(new Date(a.arrival),new Date(b.arrival))
+                    })
+                  );
+                  break;
+              
+                default:
+                  break;
+              }
+
+              this.$store.dispatch('updateNavigation');
+            }
+            
+            method();
+            this.closeModal();
           }
         });
       },

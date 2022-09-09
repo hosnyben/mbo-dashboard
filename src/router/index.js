@@ -25,6 +25,11 @@ const router = createRouter({
       component: Board,
     },
     {
+      path: '/partenaire/reservations-confirme',
+      name: 'partner_calendar_confirmed',
+      component: Board,
+    },
+    {
       path: '/partenaire/occupations',
       name: 'partner_closing',
       component: Board,

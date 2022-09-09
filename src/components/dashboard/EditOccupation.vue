@@ -4,31 +4,7 @@
       <div class="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
         <div class="space-y-6">
           <div>
-						<Listbox as="div" v-model="selectedOffer" :disabled="editing">
-							<ListboxLabel class="block text-sm font-medium text-gray-700">Établissement / Offre</ListboxLabel>
-							<div class="relative mt-1">
-								<ListboxButton class="relative w-full cursor-default rounded-md border border-gray-300 bg-white py-2 pl-3 pr-10 text-left shadow-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 sm:text-sm">
-									<span class="block truncate">{{ selectedOffer?.name || 'Choisir' }}</span>
-									<span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
-										<ChevronUpDownIcon class="h-5 w-5 text-gray-400" aria-hidden="true" />
-									</span>
-								</ListboxButton>
-
-								<transition leave-active-class="transition ease-in duration-100" leave-from-class="opacity-100" leave-to-class="opacity-0">
-									<ListboxOptions class="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
-										<ListboxOption as="template" v-for="offer in offers" :key="offer.id" :value="offer" v-slot="{ active, selected }">
-											<li :class="[active ? 'text-white bg-primary-600' : 'text-gray-900', 'relative cursor-default select-none py-2 pl-3 pr-9']">
-												<span :class="[active ? 'font-semibold' : 'font-normal', 'block truncate']">{{ offer.name }}</span>
-
-												<span v-if="selected" :class="[active ? 'text-white' : 'text-primary-600', 'absolute inset-y-0 right-0 flex items-center pr-4']">
-													<CheckIcon class="h-5 w-5" aria-hidden="true" />
-												</span>
-											</li>
-										</ListboxOption>
-									</ListboxOptions>
-								</transition>
-							</div>
-						</Listbox>
+            <EtabList v-model="selectedOffer" :list="offers" v-if="offers.length" class="mt-5" />
 					</div>
           <div>
 						<label class="block text-sm font-medium text-gray-700 mb-1">Période d'occupation</label>
@@ -49,14 +25,13 @@
   </div>
 </template>
 <script setup>
-import { Listbox, ListboxButton, ListboxLabel, ListboxOption, ListboxOptions } from '@headlessui/vue'
-import { CheckIcon, ChevronUpDownIcon } from '@heroicons/vue/20/solid'
 import Datepicker from '@vuepic/vue-datepicker'
 import '@vuepic/vue-datepicker/dist/main.css'
 import { format } from 'date-fns'
 import { fr } from 'date-fns/locale'
 import startOfToday from 'date-fns/startOfToday'
 import userService from '../../services/user.service';
+import EtabList from '../EtabList.vue';
 </script>
 <script>
 export default {
@@ -66,8 +41,7 @@ export default {
         from: null,
         to: null,
         selectedOffer: null,
-        occupations: [],
-        offers : []
+        occupations: []
       };
     },
 		computed: {
@@ -87,39 +61,14 @@ export default {
         return this.occupations.find(({id}) => {
           return id === parseInt(this.$route.params.id.split('-')[0])
         })['occupations']
+      },
+      offers() {
+        return this.$store.state.other.offers
       }
 		},
     mounted() {
-      this.getOffers();
     },
     methods: {
-      async getOffers() {
-        this.offers = await userService.getOffers().then(({data}) => {
-          if( this.editing ){
-            const currentEtab = data.find( ({id}) => {
-              return id === parseInt(this.$route.params.id.split('-')[0])
-            })
-            this.selectedOffer = currentEtab || null;
-          }else
-            this.selectedOffer = data[0] || null;
-
-
-          this.getOccupations();
-          return data
-        })
-      },
-      async getOccupations() {
-        this.occupations = await userService.getOccupations().then(({data}) => {
-          if( this.selectedOffer ){
-            const tofetch = data.find( ({id}) => {
-              return id === this.selectedOffer.id
-            })
-            this.from = tofetch ? new Date(tofetch.occupations[this.occupationKey]['from-date']) : null;
-            this.to = tofetch ? new Date(tofetch.occupations[this.occupationKey]['to-date']) : null;
-          }
-          return data;
-        });
-      },
       formatDay(date) {
 				return format(date, 'd-MM-Y HH:mm',{locale: fr})
       },
@@ -147,7 +96,7 @@ export default {
           toSend.push(data);
         }
         
-        await userService.updateOccupation(this.selectedOffer.id,{
+        await userService.updateOccupation(this.selectedOffer,{
           occupations : toSend
         }).then(({data}) => {
           if( stay ) {

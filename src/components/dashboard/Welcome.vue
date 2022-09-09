@@ -2,7 +2,7 @@
 	<main class="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
 		<div class="mx-auto max-w-xl py-16 sm:py-24">
 			<div class="text-center">
-				<p class="text-base font-semibold text-primary-600">Bienvenue cher au panneau d'administration</p>
+				<p class="text-base font-semibold text-primary-600">Bienvenue cher {{ user.user_display_name }} au panneau d'administration</p>
 				<h1 class="mt-2 text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl">Marrakech Best Of</h1>
 				<p class="mt-2 text-lg text-gray-500">Votre partenaire.</p>
 			</div>
@@ -44,6 +44,9 @@ import { ChevronRightIcon } from '@heroicons/vue/20/solid'
     computed: {
       navigation() {
         return this.$store.state.other.navigation
+      },
+      user() {
+        return JSON.parse(localStorage.getItem('user'))
       }
     }
   };

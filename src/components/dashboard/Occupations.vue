@@ -1,5 +1,5 @@
 <template>
-  <div class="px-5 sm:px-6 lg:px-8">
+  <div class="px-5 sm:px-6 lg:px-8" style="min-height: 400px;">
     <div class="sm:flex sm:items-center">
       <div class="sm:flex-auto">
         <h1 class="text-xl font-semibold text-gray-900">Occupations</h1>
@@ -9,22 +9,9 @@
         <RouterLink class="inline-flex items-center justify-center rounded-md border border-transparent bg-primary-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 sm:w-auto" to="/partenaire/occupations/nouvelle">Nouvelle occcupation</RouterLink>
       </div>
     </div>
+    <Loader v-if="loading" />
     <div v-if="currentOccupation">
-      <div class="xl:hidden my-5">
-        <label for="tabs" class="sr-only">Votre établissement</label>
-        <!-- Use an "onChange" listener to redirect the user to the selected tab URL. -->
-        <select id="tabs" name="tabs" class="block w-full rounded-md border-gray-300 focus:border-primary-500 focus:ring-primary-500">
-          <option v-for="tab in tabs" :key="tab.id" :selected="tab.current">{{ tab.name }}</option>
-        </select>
-      </div>
-      <div class="hidden xl:block my-5">
-        <nav class="isolate flex divide-x divide-gray-200 rounded-lg shadow" aria-label="Tabs">
-          <span v-for="tab,index in tabs" :key="tab.name" @click="selectedEtab = tab.id" :class="[tab.current ? 'text-gray-900' : 'text-gray-500 hover:text-gray-700', index === 0 ? 'rounded-l-lg' : '', index === tabs.length - 1 ? 'rounded-r-lg' : '', 'cursor-pointer group relative min-w-0 flex-1 overflow-hidden bg-white py-4 px-4 text-sm font-medium text-center hover:bg-gray-50 focus:z-10']" :aria-current="tab.current ? 'page' : undefined">
-            <span>{{ tab.name }}</span>
-            <span aria-hidden="true" :class="[tab.current ? 'bg-primary-500' : 'bg-transparent', 'absolute inset-x-0 bottom-0 h-0.5']" />
-          </span>
-        </nav>
-      </div>
+      <EtabList v-model="selectedEtab" :list="projects" v-if="projects.length > 1" class="mt-5" />
       <div class=" mt-8 overflow-hidden shadow ring-1 ring-black ring-opacity-5 sm:-mx-0 md:mx-0 md:rounded-lg mb-5">
         <table class="min-w-full divide-y divide-gray-300">
           <thead class="bg-gray-50">
@@ -67,6 +54,8 @@
   import userService from '../../services/user.service';
   import format from 'date-fns/format'
   import { fr } from 'date-fns/locale'
+  import EtabList from '../EtabList.vue'
+import Loader from '../Loader.vue';
 </script>
 <script>
   import { debounce } from 'lodash';
@@ -76,7 +65,8 @@
       return {
         enabled : false,
         occupations : [],
-        selectedEtab : 0
+        selectedEtab : 0,
+        loading: false
       }
     },
     mounted() {
@@ -84,8 +74,10 @@
     },
     methods: {
       async getOccupations() {
+        this.loading = true;
         this.occupations = await userService.getOccupations().then(({data}) => {
           this.selectedEtab = data[0].id;
+          this.loading = false;
           return data;
         });
       },
@@ -118,12 +110,12 @@
       occupation_label() {
         return this.enabled && 'Heure' || 'Date'
       },
-      tabs() {
-        return this.occupations.map(({id,name}) => {
+      projects() {
+        return this.occupations.map(({id,name,occupations}) => {
           return {
-            id : id,
-            name : name,
-            current : id === this.selectedEtab
+            value : id,
+            label : name,
+            count : occupations.length || 0
           }
         })
       },

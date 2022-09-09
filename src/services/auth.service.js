@@ -7,11 +7,12 @@ class AuthService {
         username: user.username,
         password: user.password
       })
-      .then(response => {
-        if (response.data.token) {
-          localStorage.setItem('user', JSON.stringify(response.data));
+      .then(({data}) => {
+        console.log(data);
+        if (data.token) {
+          localStorage.setItem('user', JSON.stringify(data));
         }
-        return response.data;
+        return data;
       });
   }
   logout() {

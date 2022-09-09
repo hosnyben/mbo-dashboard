@@ -2,14 +2,14 @@
   <div class="px-4 sm:px-6 lg:px-8">
     <div class="sm:flex sm:items-center">
       <div class="sm:flex-auto">
-        <h1 class="text-xl font-semibold text-gray-900">Réservations Traitées par mois</h1>
-        <p class="mt-2 text-sm text-gray-700">Liste de toutes les réservations traitées par mois, par établissements/offres.</p>
+        <h1 class="text-xl font-semibold text-gray-900">Réservations Reçues par mois</h1>
+        <p class="mt-2 text-sm text-gray-700">Liste de toutes les réservations reçues par mois, par établissements/offres.</p>
       </div>
     </div>
     <div class="mt-8 overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg mb-5">
       <nav class="flex items-center justify-between bg-white px-4 py-3 sm:px-6" aria-label="Pagination">
         <div class="hidden sm:block">
-          <p class="text-sm text-gray-700">Les reservations traitées le mois de <strong>{{monthYear}}</strong></p>
+          <p class="text-sm text-gray-700">Les reservations reçues le mois de <strong>{{monthYear}}</strong></p>
         </div>
         <div class="flex flex-1 justify-between sm:justify-end">
           <button class="relative inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 capitalize" @click="changeMonth(0)"><ChevronLeftIcon class="h-5 w-5" aria-hidden="true" /> {{prevMonth}}</button>
@@ -18,66 +18,81 @@
       </nav>
     </div>
 
-    <div>
-      <h3 class="text-lg font-medium leading-6 text-gray-900">Statistiques</h3>
-      <dl class="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-3">
-        <div v-for="item in stats" :key="item.name" class="overflow-hidden rounded-lg bg-white px-4 py-5 shadow sm:p-6">
-          <dt class="truncate text-sm font-medium text-gray-500">{{ item.name }}</dt>
-          <dd class="mt-1 text-3xl font-semibold tracking-tight text-gray-900">{{ item.stat }}</dd>
-        </div>
-      </dl>
-    </div>
+    
+    <h3 class="text-lg font-medium leading-6 text-gray-900">Statistiques</h3>
+    <Loader v-if="loading" />
+    <div v-else>
+      <div>
+        <EtabList v-model="selectedProject" :list="projects" v-if="projects.length > 1" class="mb-5" />
+        <dl class="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-3">
+          <div v-for="item in stats" :key="item.name" class="overflow-hidden rounded-lg bg-white px-4 py-5 shadow sm:p-6">
+            <dt class="truncate text-sm font-medium text-gray-500">{{ item.name }}</dt>
+            <dd class="mt-1 text-3xl font-semibold tracking-tight text-gray-900">{{ item.stat }}</dd>
+          </div>
+        </dl>
+      </div>
 
-    <EtabList v-model="selectedProject" :list="projects" v-if="projects.length > 1" class="mt-5" />
+      <div class="py-4">
+        <SwitchGroup as="div" class="flex items-center">
+          <Switch v-model="ownercomment" :class="[ownercomment ? 'bg-primary-600' : 'bg-gray-200', 'relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2']">
+            <span aria-hidden="true" :class="[ownercomment ? 'translate-x-5' : 'translate-x-0', 'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out']" />
+          </Switch>
+          <SwitchLabel as="span" class="ml-3">
+            <span class="text-sm font-medium text-gray-900">Avec commentaire</span>
+            <span class="text-sm text-gray-500"> (Afficher les réservations avec commentaire du propriétaire)</span>
+          </SwitchLabel>
+        </SwitchGroup>
+      </div>
 
-    <div class="mt-8 overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg mb-5">
-      <table class="min-w-full divide-y divide-gray-300">
-        <thead class="bg-gray-50">
-          <tr>
-            <th scope="col" class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6">ID de reservation</th>
-            <th scope="col" class="hidden px-3 py-3.5 text-left text-sm font-semibold text-gray-900 lg:table-cell">Nom du client</th>
-            <th scope="col" class="hidden px-3 py-3.5 text-left text-sm font-semibold text-gray-900 lg:table-cell">Nombre de personnes</th>
-            <th scope="col" class="hidden px-3 py-3.5 text-left text-sm font-semibold text-gray-900 lg:table-cell">Arrivé</th>
-            <th scope="col" class="hidden px-3 py-3.5 text-left text-sm font-semibold text-gray-900 lg:table-cell">Départ</th>
-            <th scope="col" class="relative py-3.5 pl-3 pr-4 sm:pr-6">
-              <span class="sr-only">Edit</span>
-            </th>
-          </tr>
-        </thead>
-        <tbody class="divide-y divide-gray-200 bg-white">
-          <tr v-for="resa in currentReservations" :key="resa.id">
-            <td class="w-full max-w-0 py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:w-auto sm:max-w-none sm:pl-6">
-              #{{ resa.id }}
-              <dl class="font-normal lg:hidden">
-                <dt class="sr-only">Nom du client</dt>
-                <dd class="mt-1 truncate text-gray-500 text-xs"><span style="display: inline-block;" class="font-semibold">Nom : </span> {{ resa['full-name'] }}</dd>      
-                <dt class="sr-only">Pax</dt>
-                <dd class="mt-1 truncate text-gray-500 text-xs"><span style="display: inline-block;" class="font-semibold">Pax : </span> {{ resa['nbr-adult'] }} Adultes - {{ resa['nbr-children'] || 0 }} Enfants</dd>      
-                <dt class="sr-only">Date/Here de début</dt>
-                <dd class="mt-1 truncate text-gray-500 text-xs"><span style="display: inline-block;" class="font-semibold">Arrivé : </span> {{ dateDisplay(resa.arrival,resa.departure)[0] }}</dd>
-                <dt v-if="dateDisplay(resa.arrival,resa.departure)[1] && dateDisplay(resa.arrival,resa.departure)[0] !== dateDisplay(resa.arrival,resa.departure)[1]" class="sr-only">Départ</dt>
-                <dd v-if="dateDisplay(resa.arrival,resa.departure)[1] && dateDisplay(resa.arrival,resa.departure)[0] !== dateDisplay(resa.arrival,resa.departure)[1]" class="mt-1 truncate text-gray-500 text-xs"><span style="display: inline-block;" class="font-semibold">Départ : </span> {{ dateDisplay(resa.arrival,resa.departure)[1] }}</dd>
-              </dl>
-            </td>
-            <td class="hidden px-3 py-4 text-sm text-gray-500 lg:table-cell">{{ resa['full-name'] }}</td>
-            <td class="hidden px-3 py-4 text-sm text-gray-500 lg:table-cell">{{ resa['nbr-adult'] }} Adultes - {{ resa['nbr-children'] || 0 }} Enfants</td>
-            <td class="hidden px-3 py-4 text-sm text-gray-500 lg:table-cell">{{ dateDisplay(resa.arrival,resa.departure)[0] }}</td>
-            <td class="hidden px-3 py-4 text-sm text-gray-500 lg:table-cell">{{ dateDisplay(resa.arrival,resa.departure)[1] }}</td>
-            <td class="py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
-              <span class="text-primary-600 hover:text-primary-900 cursor-pointer" @click="selectResa(resa)">Détails</span>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-      <nav class="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6" aria-label="Pagination">
-        <div class="hidden sm:block">
-          <p class="text-sm text-gray-700">Les reservations traitées le mois de <strong>{{monthYear}}</strong></p>
-        </div>
-        <div class="flex flex-1 justify-between sm:justify-end">
-          <button class="relative inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 capitalize" @click="changeMonth(0)"><ChevronLeftIcon class="h-5 w-5" aria-hidden="true" /> {{prevMonth}}</button>
-          <button v-if="!isLastMonth" class="ml-3 relative inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 capitalize" @click="changeMonth(1)">{{nextMonth}} <ChevronRightIcon class="h-5 w-5" aria-hidden="true" /></button>
-        </div>
-      </nav>
+      <div class="overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg mb-5">
+        <table class="min-w-full divide-y divide-gray-300">
+          <thead class="bg-gray-50">
+            <tr>
+              <th scope="col" class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6">ID de reservation</th>
+              <th scope="col" class="hidden px-3 py-3.5 text-left text-sm font-semibold text-gray-900 lg:table-cell">Nom du client</th>
+              <th scope="col" class="hidden px-3 py-3.5 text-left text-sm font-semibold text-gray-900 lg:table-cell">Nombre de personnes</th>
+              <th scope="col" class="hidden px-3 py-3.5 text-left text-sm font-semibold text-gray-900 lg:table-cell">Arrivé</th>
+              <th scope="col" class="hidden px-3 py-3.5 text-left text-sm font-semibold text-gray-900 lg:table-cell">Départ</th>
+              <th scope="col" class="relative py-3.5 pl-3 pr-4 sm:pr-6">
+                <span class="sr-only">Edit</span>
+              </th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-200 bg-white">
+            <tr v-for="resa in currentReservations" :key="resa.id">
+              <td class="w-full max-w-0 py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:w-auto sm:max-w-none sm:pl-6">
+                #{{ resa.id }}
+                <dl class="font-normal lg:hidden">
+                  <dt class="sr-only">Nom du client</dt>
+                  <dd class="mt-1 truncate text-gray-500 text-xs"><span style="display: inline-block;" class="font-semibold">Nom : </span> {{ resa['full-name'] }}</dd>      
+                  <dt class="sr-only">Pax</dt>
+                  <dd class="mt-1 truncate text-gray-500 text-xs"><span style="display: inline-block;" class="font-semibold">Pax : </span> {{ resa['nbr-adult'] }} Adultes - {{ resa['nbr-children'] || 0 }} Enfants</dd>      
+                  <dt class="sr-only">Date/Here de début</dt>
+                  <dd class="mt-1 truncate text-gray-500 text-xs"><span style="display: inline-block;" class="font-semibold">Arrivé : </span> {{ dateDisplay(resa.arrival,resa.departure)[0] }}</dd>
+                  <dt v-if="dateDisplay(resa.arrival,resa.departure)[1] && dateDisplay(resa.arrival,resa.departure)[0] !== dateDisplay(resa.arrival,resa.departure)[1]" class="sr-only">Départ</dt>
+                  <dd v-if="dateDisplay(resa.arrival,resa.departure)[1] && dateDisplay(resa.arrival,resa.departure)[0] !== dateDisplay(resa.arrival,resa.departure)[1]" class="mt-1 truncate text-gray-500 text-xs"><span style="display: inline-block;" class="font-semibold">Départ : </span> {{ dateDisplay(resa.arrival,resa.departure)[1] }}</dd>
+                </dl>
+              </td>
+              <td class="hidden px-3 py-4 text-sm text-gray-500 lg:table-cell">{{ resa['full-name'] }}</td>
+              <td class="hidden px-3 py-4 text-sm text-gray-500 lg:table-cell">{{ resa['nbr-adult'] }} Adultes - {{ resa['nbr-children'] || 0 }} Enfants</td>
+              <td class="hidden px-3 py-4 text-sm text-gray-500 lg:table-cell">{{ dateDisplay(resa.arrival,resa.departure)[0] }}</td>
+              <td class="hidden px-3 py-4 text-sm text-gray-500 lg:table-cell">{{ dateDisplay(resa.arrival,resa.departure)[1] }}</td>
+              <td class="py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
+                <span class="text-primary-600 hover:text-primary-900 cursor-pointer" @click="selectResa(resa)">Détails</span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <nav class="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6" aria-label="Pagination">
+          <div class="hidden sm:block">
+            <p class="text-sm text-gray-700">Les reservations traitées le mois de <strong>{{monthYear}}</strong></p>
+          </div>
+          <div class="flex flex-1 justify-between sm:justify-end">
+            <button class="relative inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 capitalize" @click="changeMonth(0)"><ChevronLeftIcon class="h-5 w-5" aria-hidden="true" /> {{prevMonth}}</button>
+            <button v-if="!isLastMonth" class="ml-3 relative inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 capitalize" @click="changeMonth(1)">{{nextMonth}} <ChevronRightIcon class="h-5 w-5" aria-hidden="true" /></button>
+          </div>
+        </nav>
+      </div>
     </div>
   </div>
   <Modal :data="selectedResa" :show="showModal" :actions="[{label:'Fermer',method:() => {showModal = false}}]" @close="showModal = false" />
@@ -96,6 +111,8 @@ import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/vue/20/solid'
 import compareAsc from 'date-fns/compareAsc'
 import Modal from '../Modal.vue'
 import EtabList from '../EtabList.vue'
+import Loader from '../Loader.vue';
+import { Switch, SwitchGroup, SwitchLabel } from '@headlessui/vue'
 </script>
 <script>
   import { debounce } from 'lodash';
@@ -110,7 +127,8 @@ import EtabList from '../EtabList.vue'
 				currentMonth: null,
         projects : [],
         showModal: false,
-        selectedProject : null
+        selectedProject : null,
+        ownercomment: false
       }
     },
     mounted() {
@@ -134,16 +152,14 @@ import EtabList from '../EtabList.vue'
         return isSameMonth(this.currentDay,subMonths(target,1))
       },
       currentReservations() {
-        return this.reservations.filter(({project_id}) => {
-          return project_id === this.selectedProject
+        return this.reservations.filter(({project,...resa}) => {
+          return project === this.selectedProject && ( !this.ownercomment || resa['partner-comment'] )
         })
       },
       stats() {
         let ad = 0,ch = 0;
         
-        const resas = this.reservations.filter(({project_id}) => {
-          return project_id === this.selectedProject
-        });
+        const resas = this.currentReservations
         
         resas.forEach(item => {
           ad += parseInt(item['nbr-adult']);
@@ -192,10 +208,10 @@ import EtabList from '../EtabList.vue'
               return compareAsc(new Date(a.arrival),new Date(b.arrival));
             });
             
-            cleanData.forEach(({project,project_id}) => {
-              if( !projects[project_id] && project ) projects[project_id] = {
-                value : project_id,
-                label : project
+            cleanData.forEach(({project_name,project}) => {
+              if( !projects[project] && project_name ) projects[project] = {
+                value : project,
+                label : project_name
               }
             })
 

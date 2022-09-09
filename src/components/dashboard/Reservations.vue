@@ -32,7 +32,7 @@
       </div>
     </div>
     <section class="mt-12 xl:mt-0 xl:pl-7 xl:col-span-2">
-      <div v-if="loading" class="mt-5 p-4 mb-4 text-sm text-white bg-primary-100 rounded-lg dark:bg-primary-200 dark:text-white" role="alert">Chargement en cours</div>
+      <Loader v-if="loading" />
       <div v-else>
         <div class="sm:hidden">
           <label for="tabs" class="sr-only">Type de réservation</label>
@@ -52,18 +52,18 @@
             </span>
           </nav>
         </div>
-        <EtabList v-model="currentProject" :list="projects" v-if="projects.length > 1" class="mt-5" />
+        <EtabList v-model="currentProject" :list="projects" v-model:title="fullname" v-if="projects.length > 1" class="mt-5" :filterByName="true" />
         <div v-for="(resas,index) in dayResa" :key="index">
           <div class="pb-4 mb-4" v-if="index === currentResaType">
             <ol class="mt-4 space-y-1 text-sm leading-6 text-gray-500" v-if="resas.resas.length">
-              <li v-for="reservation in resas.resas.filter( item => item.project_id === currentProject )" :key="reservation.id" class="group flex items-center space-x-4 rounded-xl py-2 px-4 focus-within:bg-white hover:bg-white">
+              <li v-for="reservation in resas.resas.filter( item => (item.project === currentProject) && (!this.fullname || item['full-name'].includes(this.fullname)) )" :key="reservation.id" class="group flex items-center space-x-4 rounded-xl py-2 px-4 focus-within:bg-white hover:bg-white">
                 <!-- <img :src="meeting.imageUrl" alt="" class="h-10 w-10 flex-none rounded-full" /> -->
                 <div class="flex-auto">
                   <p class="text-gray-900 font-semibold">
                     {{ reservation['full-name'] }} 
                     <span class="ml-2 inline-block flex-shrink-0 rounded-full px-2 py-0.5 text-xs font-medium bg-red-100 text-red-800" v-if="reservation.urgent">Dernière minute</span>
                     <span class="ml-2 inline-block flex-shrink-0 rounded-full px-2 py-0.5 text-xs font-medium" :class="confirmationLabel[reservation['resa-confirmation']].class">{{confirmationLabel[reservation['resa-confirmation']].text}}</span>
-                    <span class="ml-2 inline-block flex-shrink-0 rounded-full px-2 py-0.5 text-xs font-medium bg-primary-100 text-white">{{ reservation.project}}</span>
+                    <span class="ml-2 inline-block flex-shrink-0 rounded-full px-2 py-0.5 text-xs font-medium bg-primary-100 text-white">{{ reservation.project_name}}</span>
                   </p>
                   <p class="mt-0.5">
                     <time :datetime="dateDisplay(reservation.arrival,reservation.departure)[0]">{{ dateDisplay(reservation.arrival,reservation.departure)[0] }}</time>
@@ -102,7 +102,7 @@
       </div>
     </section>
   </div>
-  <Modal :data="selectedResa" :show="showModal" :actions="[{label:'Fermer',method:() => {showModal = false}}]" @close="showModal = false" :confirmationLabel="confirmationLabel" :allowcomment="true" />
+  <Modal :data="selectedResa" :show="showModal" :actions="[{label:'Fermer',method:() => {showModal = false}}]" @close="showModal = false" :confirmationLabel="confirmationLabel" :allowcomment="allowcomment(selectedResa)" />
 </template>
 
 <script setup>
@@ -129,6 +129,7 @@ import compareAsc from 'date-fns/compareAsc'
 import differenceInHours from 'date-fns/differenceInHours'
 import Modal from '../Modal.vue'
 import EtabList from '../EtabList.vue'
+import Loader from '../Loader.vue'
 
 </script>
 <script>
@@ -167,7 +168,8 @@ import EtabList from '../EtabList.vue'
         },
         currentResaType: 'active',
         now : Date.now(),
-        currentProject : null
+        currentProject : null,
+        fullname: null
       };
     },
     mounted() {
@@ -180,6 +182,9 @@ import EtabList from '../EtabList.vue'
       }, 1000*60*10); // Refresh in 10 minutes
     },
 		methods: {
+      allowcomment({arrival}) {
+        return isSameDay(new Date(arrival),Date.now())
+      },
 			setCurrentDay(day) {
 				if( !this.currentMonth || !isSameMonth(this.currentDay,day) ){
 					this.setCurrentMonth(day);
@@ -188,9 +193,7 @@ import EtabList from '../EtabList.vue'
 
 				this.currentDay = day;
         
-        // if( this.currentMonth & isSameMonth(this.currentDay,day) ){
-          this.resetCurrentProject();
-        // }
+        this.resetCurrentProject();
 			},
 			setCurrentMonth(day) {
 				this.currentMonth = getMonth(day);
@@ -212,26 +215,39 @@ import EtabList from '../EtabList.vue'
         this.currentProject = this.projects[0] ? this.projects[0].value : null;
       },2000),
       async confirmResa(id) {
-        await userService.updateReservation(id,{'resa-confirmation':'confirmed-owner'}).then(({data}) => {
+        await userService.updateReservation(id,{'resa-confirmation':this.isAdmin ?'confirmed':'confirmed-owner'}).then(({data}) => {
           if( data ){
             this.reservations.forEach(resa => {
               if( resa.id === id ) {
-                resa['resa-confirmation'] = 'confirmed-owner';
+                resa['resa-confirmation'] = this.isAdmin ?'confirmed':'confirmed-owner';
                 return
               }
             })
+            
+            this.$store.dispatch('setUrgentResas', this.$store.state.other.urgentResas.filter(resa => id !== resa.id));
+            this.$store.commit('setConfirmResas', this.$store.state.other.confirmResas.filter(resa => id !== resa.id));
+            this.$store.commit('setConfirmedResas', [...this.$store.state.other.confirmedResas,...this.reservations.filter((resa) => resa.id === id)].sort((a, b) => {
+              return compareAsc(new Date(a.arrival),new Date(b.arrival))
+            }));
+
+            this.$store.dispatch('updateNavigation');
           }
         });
       },
       async denyResa(id) {
-        await userService.updateReservation(id,{'resa-confirmation':'not-confirmed-owner'}).then(({data}) => {
+        await userService.updateReservation(id,{'resa-confirmation':this.isAdmin ?'not-confirmed':'not-confirmed-owner'}).then(({data}) => {
           if( data ){
             this.reservations.forEach(resa => {
               if( resa.id === id ) {
-                resa['resa-confirmation'] = 'not-confirmed-owner';
+                resa['resa-confirmation'] = this.isAdmin ?'not-confirmed':'not-confirmed-owner';
                 return
               }
             })
+            
+            this.$store.dispatch('setUrgentResas', this.$store.state.other.urgentResas.filter(resa => id !== resa.id));
+            this.$store.commit('setConfirmResas', this.$store.state.other.confirmResas.filter(resa => id !== resa.id));
+
+            this.$store.dispatch('updateNavigation');
           }
         });
       },
@@ -272,11 +288,14 @@ import EtabList from '../EtabList.vue'
       }
 		},
     computed: {
+      isAdmin() {
+        return JSON.parse(localStorage.user).user_role === 'administrator' || JSON.parse(localStorage.user).user_role === 'bookagent'
+      },
       dayResa() {
         const reservations = this.reservations.filter(({arrival}) => {
           return isSameDay(this.currentDay,new Date(arrival));
         }).map(resa => {
-          return {...resa,...{urgent:isSameDay(new Date(resa.created_at),new Date(resa.arrival))}};
+          return {...resa,...{urgent:isSameDay(new Date(resa.created_at),new Date(resa.arrival)) && resa['resa-confirmation'] === 'waiting' }};
         }).sort((a, b) => {
           return compareAsc(new Date(a.arrival),new Date(b.arrival));
         });
@@ -285,17 +304,17 @@ import EtabList from '../EtabList.vue'
           urgent : {
             label : 'Urgentes',
             resas : reservations.filter(resa => {
-              return differenceInHours(new Date(resa.arrival),this.now) >= 0 && resa['resa-confirmation'] === 'waiting' && resa.urgent
+              return differenceInHours(new Date(resa.arrival),this.now) >= 0 && resa.urgent
             })
           },
           active : {
-            label : 'À traiter',
+            label : 'Bientôt',
             resas : reservations.filter(resa => {
               return differenceInHours(new Date(resa.arrival),this.now) >= 0 && !['not-confirmed','not-confirmed-owner'].includes(resa['resa-confirmation']) && !resa.urgent
             })
           },
           done : {
-            label : 'Traitées',
+            label : 'Reçues',
             resas : reservations.filter(resa => {
               return differenceInHours(new Date(resa.arrival),this.now) < 0 && ['confirmed','confirmed-owner'].includes(resa['resa-confirmation'])
             })
@@ -350,10 +369,10 @@ import EtabList from '../EtabList.vue'
       projects() {
         let projects = {}
           
-        this.dayResa[this.currentResaType].resas.forEach(({project,project_id}) => {
-          if( !projects[project_id] && project ) projects[project_id] = {
-            label : project,
-            value : project_id
+        this.dayResa[this.currentResaType].resas.forEach(({project_name,project}) => {
+          if( !projects[project] && project_name ) projects[project] = {
+            label : project_name,
+            value : project
           }
         })
 
@@ -364,8 +383,8 @@ import EtabList from '../EtabList.vue'
         });
 
         return projects.map(item => {
-          return {...item,...{ count : this.dayResa[this.currentResaType]?.resas.filter(({project_id}) => {
-            return project_id === item.value
+          return {...item,...{ count : this.dayResa[this.currentResaType]?.resas.filter(({project}) => {
+            return project === item.value
           }).length }}
         })
       }
