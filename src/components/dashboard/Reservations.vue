@@ -56,7 +56,7 @@
         <div v-for="(resas,index) in dayResa" :key="index">
           <div class="pb-4 mb-4" v-if="index === currentResaType">
             <ol class="mt-4 space-y-1 text-sm leading-6 text-gray-500" v-if="resas.resas.length">
-              <li v-for="reservation in resas.resas.filter( item => (item.project === currentProject) && (!this.fullname || item['full-name'].includes(this.fullname)) )" :key="reservation.id" class="group flex items-center space-x-4 rounded-xl py-2 px-4 focus-within:bg-white hover:bg-white">
+              <li v-for="reservation in resas.resas.filter( item => (item.project === currentProject) && (!fullname || item['full-name'].includes(fullname)) )" :key="reservation.id" class="group flex items-center space-x-4 rounded-xl py-2 px-4 focus-within:bg-white hover:bg-white">
                 <!-- <img :src="meeting.imageUrl" alt="" class="h-10 w-10 flex-none rounded-full" /> -->
                 <div class="flex-auto">
                   <p class="text-gray-900 font-semibold">

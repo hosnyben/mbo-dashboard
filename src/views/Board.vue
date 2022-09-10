@@ -1,6 +1,6 @@
 <template>
   <Dashboard>
-    <component ref="document" v-bind:is="currentcontent" :type="this.$route.name"></component>
+    <component ref="document" v-bind:is="currentcontent" :type="$route.name"></component>
   </Dashboard>
 </template>
   

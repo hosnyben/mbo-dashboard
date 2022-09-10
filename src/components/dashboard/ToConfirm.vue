@@ -22,7 +22,7 @@
           </tr>
         </thead>
         <tbody class="divide-y divide-gray-200 bg-white">
-          <tr v-for="resa in currentReservations.filter(({project,...resa}) => ( !currentProject || project === currentProject ) && ( !this.fullname || resa['full-name'].includes(this.fullname) ))" :key="resa.id">
+          <tr v-for="resa in currentReservations.filter(({project,...resa}) => ( !currentProject || project === currentProject ) && ( !fullname || resa['full-name'].includes(fullname) ))" :key="resa.id">
             <td class="w-full max-w-0 py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:w-auto sm:max-w-none sm:pl-6">
               #{{ resa.id }}
               <dl class="font-normal lg:hidden">

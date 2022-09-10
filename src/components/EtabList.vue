@@ -52,28 +52,27 @@ export default {
 		},
 	data() {
 		return {
-			search : null
+			search : null,
+			currentName : null,
+			currentVal : null
 		}
 	},
 	mounted() {
+		this.currentName = this.title;
+		this.currentVal = this.list.find(({value}) => value === this.modelValue);
+	},
+	watch : {
+		list(){
+			this.currentVal = this.list.find(({value}) => value === this.modelValue);
+		},
+		currentVal(val,old) {
+			if( val !== old && val !== this.modelValue) this.$emit('update:modelValue',val.value);
+		},
+		currentName(val,old) {
+			if( val !== old && val !== this.title) this.$emit('update:title',val);
+		}
 	},
 	computed: {
-		currentName: {
-			get() {
-				return this.title
-			},set(val) {
-				this.$emit('update:title',val);
-			}
-		},
-		currentVal: {
-			get() {
-				return this.list.find(item => {
-					return item.value === this.modelValue
-				})
-			},set(val) {
-				this.$emit('update:modelValue',val.value);
-			}
-		},
 		filteredResult() {
 			if( this.search )
 				return this.list.filter(({label}) => {
