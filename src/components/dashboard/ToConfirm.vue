@@ -15,7 +15,7 @@
             <th scope="col" class="hidden px-3 py-3.5 text-left text-sm font-semibold text-gray-900 lg:table-cell">Établissement</th>
             <th scope="col" class="hidden px-3 py-3.5 text-left text-sm font-semibold text-gray-900 lg:table-cell">Nom du client</th>
             <th scope="col" class="hidden px-3 py-3.5 text-left text-sm font-semibold text-gray-900 lg:table-cell">Nombre de personnes</th>
-            <th scope="col" class="hidden px-3 py-3.5 text-left text-sm font-semibold text-gray-900 lg:table-cell">Arrivé</th>
+            <th scope="col" class="hidden px-3 py-3.5 text-left text-sm font-semibold text-gray-900 lg:table-cell">{{isTransporter?'Pickup':'Arrivé'}}</th>
             <th scope="col" class="relative py-3.5 pl-3 pr-4 sm:pr-6">
               <span class="sr-only">Edit</span>
             </th>
@@ -25,6 +25,8 @@
           <tr v-for="resa in currentReservations.filter(({project,...resa}) => ( !currentProject || project === currentProject ) && ( !fullname || resa['full-name'].includes(fullname) ))" :key="resa.id">
             <td class="w-full max-w-0 py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:w-auto sm:max-w-none sm:pl-6">
               #{{ resa.id }}
+              <br/>
+              <span v-if="isAdmin" class="inline-block flex-shrink-0 rounded-full px-2 py-0.5 text-xs font-medium" :class="{'bg-primary-100 text-white':currentAgent(resa),'bg-gray-100 text-gray-900':!currentAgent(resa)}">{{currentAgent(resa) || 'Aucun agent' }}</span>
               <dl class="font-normal lg:hidden">
                 <dt class="sr-only">Établissement</dt>
                 <dd class="mt-1 truncate text-gray-500 text-xs"><span style="display: inline-block;" class="font-semibold">Établissement : </span> {{ offers.find(({value}) => value === resa.project)?.label || resa.project_name }}</dd>      
@@ -33,13 +35,13 @@
                 <dt class="sr-only">Pax</dt>
                 <dd class="mt-1 truncate text-gray-500 text-xs"><span style="display: inline-block;" class="font-semibold">Pax : </span> {{ resa['nbr-adult'] }} Adultes - {{ resa['nbr-children'] || 0 }} Enfants</dd>      
                 <dt class="sr-only">Date/Here de début</dt>
-                <dd class="mt-1 truncate text-gray-500 text-xs"><span style="display: inline-block;" class="font-semibold">Arrivé : </span> {{ dateDisplay(resa.arrival) }}</dd>
+                <dd class="mt-1 truncate text-gray-500 text-xs"><span style="display: inline-block;" class="font-semibold">Arrivé : </span> {{ isTransporter?dateDisplay(advanceHour(resa.arrival,resa['tr-advance'] ? parseInt(resa['tr-advance']) : 0 )):dateDisplay(resa.arrival) }}</dd>
               </dl>
             </td>
             <td class="hidden px-3 py-4 text-sm text-gray-500 lg:table-cell">{{ offers.find(({value}) => value === resa.project)?.label || resa.project_name }}</td>
             <td class="hidden px-3 py-4 text-sm text-gray-500 lg:table-cell cusrsor-pointer">{{ resa['full-name'] }}</td>
             <td class="hidden px-3 py-4 text-sm text-gray-500 lg:table-cell">{{ resa['nbr-adult'] }} Adultes - {{ resa['nbr-children'] || 0 }} Enfants</td>
-            <td class="hidden px-3 py-4 text-sm text-gray-500 lg:table-cell">{{ dateDisplay(resa.arrival) }}</td>
+            <td class="hidden px-3 py-4 text-sm text-gray-500 lg:table-cell">{{ isTransporter?dateDisplay(advanceHour(resa.arrival,resa['tr-advance'] ? parseInt(resa['tr-advance']) : 0 )):dateDisplay(resa.arrival) }}</td>
             <td class="py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
               <span class="text-primary-600 hover:text-primary-900 cursor-pointer" @click="selectResa(resa)">Détails</span>
               <span v-if="showOptions" class="text-primary-600 hover:text-primary-900 cursor-pointer mx-5" @click="confirmResa(resa.id)">Confirmer</span>
@@ -58,6 +60,7 @@ import format from 'date-fns/format'
 import userService from '../../services/user.service';
 import Modal from '../Modal.vue';
 import EtabList from '../EtabList.vue'
+import subMinutes from 'date-fns/subMinutes'
 </script>
 <script>
   export default {
@@ -72,11 +75,16 @@ import EtabList from '../EtabList.vue'
         showModal: false,
         selectedResa: {},
         currentProject: 0,
-        fullname : null
+        fullname : null,
+        staff : []
       }
     },
-    mounted() {
+    async mounted() {
       this.currentProject = this.projects[0]?.value
+      if( this.isAdmin )
+        this.staff = await userService.getAdmins().then(({data}) => {        
+          return data
+        })
     },
     watch: {
       type(val,oldval) {
@@ -84,6 +92,15 @@ import EtabList from '../EtabList.vue'
       }
     },
     computed: {
+      isAdmin() {
+        return JSON.parse(localStorage.user).user_role === 'administrator' || JSON.parse(localStorage.user).user_role === 'bookagent';
+      },
+      isPartner() {
+        return JSON.parse(localStorage.user).user_role === 'partner';
+      },
+      isTransporter() {
+        return JSON.parse(localStorage.user).user_role === 'transporter';        
+      },
       modalActions() {
         if ( this.type === 'partner_calendar_confirmed' )
           return [{label:'Fermer',method: () => { this.showModal = false } }];
@@ -146,6 +163,13 @@ import EtabList from '../EtabList.vue'
       }
     },
     methods: {
+      advanceHour(time,minutes) {
+        time = new Date(time);
+        return subMinutes(time, minutes)
+      },
+      currentAgent(resa) {
+        return this.staff.find(({id}) => id == resa.post_author )?.name
+      },
       selectResa(resa) {
         this.selectedResa = resa;
         this.showModal = true;

@@ -20,7 +20,7 @@
                   <span v-if="confirmationLabel[data['resa-confirmation']]" class="mr-2 inline-block flex-shrink-0 rounded-full px-2 py-0.5 text-xs font-medium" :class="confirmationLabel[data['resa-confirmation']].class">{{confirmationLabel[data['resa-confirmation']].text}}</span>
                   <span class="inline-block flex-shrink-0 rounded-full px-2 py-0.5 text-xs font-medium bg-primary-100 text-white">{{ data.project_name}}</span>
                 </div>
-                <div class="px-4 pb-4 sm:px-6" v-if="isAdmin && resaType && resaType !== 'partner_calendar_confirmed'">
+                <div class="px-4 pb-4 sm:px-6" v-if="isAdmin">
                   <SwitchGroup as="div" class="flex items-center">
                     <Switch v-model="editMode" :class="[editMode ? 'bg-primary-600' : 'bg-gray-200', 'relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2']">
                       <span aria-hidden="true" :class="[editMode ? 'translate-x-5' : 'translate-x-0', 'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out']" />
@@ -33,18 +33,18 @@
                 </div>
                 <div class="border-t border-gray-200">
                   <dl>
-                    <div class="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                    <div class="px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
                       <dt class="text-sm font-medium text-gray-500">Nom complet</dt>
                       <dd class="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">{{ data['full-name'] }}</dd>
                     </div>
-                    <div class="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                    <div class="px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
                       <dt class="text-sm font-medium text-gray-500">Adresse E-mail</dt>
                       <dd class="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">
                         <input v-if="editMode" type="text" v-model="data.email" class="w-56 block rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm" placeholder="Adresse e-mail" />
                         <span v-else>{{ data.email }}</span>
                       </dd>
                     </div>
-                    <div class="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                    <div v-if="isAdmin" class="px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
                       <dt class="text-sm font-medium text-gray-500">Établissement</dt>
                       <dd class="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">
                         <div v-if="editMode" class="md:space-x-10 md:flex space-y-5 md:space-y-0">
@@ -65,7 +65,7 @@
                         </span>
                       </dd>
                     </div>
-                    <div class="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                    <div class="px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
                       <dt class="text-sm font-medium text-gray-500">Téléphone</dt>
                       <dd class="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">
                         <div v-if="editMode" class="md:flex items-center space-x-2">
@@ -75,7 +75,7 @@
                         <span v-else>{{ data['country-phone'] }}{{ data.phone }}</span>
                       </dd>
                     </div>
-                    <div class="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                    <div class="px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
                       <dt class="text-sm font-medium text-gray-500">Nombre de personnes</dt>
                       <dd class="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">
                         <div v-if="editMode" class="md:flex items-center space-x-10">
@@ -91,16 +91,16 @@
                         <span v-else>{{ data['nbr-adult'] }} Adultes - {{ data['nbr-children'] || 0 }} Enfants</span>
                       </dd>
                     </div>
-                    <div class="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                      <dt class="text-sm font-medium text-gray-500">Date/Heure d'arrivé</dt>
+                    <div class="px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                      <dt class="text-sm font-medium text-gray-500">Date/Heure {{isTransporter?'de Pickup':'d\'arrivé'}}</dt>
                       <dd class="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">
                         <div v-if="editMode" class="w-56">
                           <Datepicker locale="fr" selectText="Choisir" cancelText="Annuler" :format="formatDay" :minDate="today" v-model="data.arrival" @update:modelValue="(val) => reformatDate(val,'arrival')"></Datepicker>
                         </div>
-                        <span v-else>{{ dateDisplay(data.arrival) }}</span>
+                        <span v-else>{{ isTransporter?dateDisplay(advanceHour(data.arrival,data['tr-advance'] ? parseInt(data['tr-advance']) : 0)):dateDisplay(data.arrival) }}</span>
                       </dd>
                     </div>
-                    <div class="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                    <div class="px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6" v-if="!isTransporter">
                       <dt class="text-sm font-medium text-gray-500">Date/Heure de départ</dt>
                       <dd class="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">
                         <div v-if="editMode" class="w-56">
@@ -109,7 +109,7 @@
                         <span v-else>{{ dateDisplay(data.departure) }}</span>
                       </dd>
                     </div>
-                    <div class="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                    <div v-if="isAdmin" class="px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
                       <dt class="text-sm font-medium text-gray-500">Transport</dt>
                       <dd class="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">
                         <div v-if="editMode" class="md:space-x-10 md:flex space-y-5 md:space-y-0">
@@ -134,22 +134,26 @@
                         </span>
                       </dd>
                     </div>
-                    <div class="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6" v-if="isAdmin">
+                    <div class="px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6" v-if="isAdmin">
                       <dt class="text-sm font-medium text-gray-500">Attribuer à un transporteur</dt>
                       <dd class="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">
                         <select v-model="data['tr-agent']" class="w-56 mt-1 block w-full rounded-md border-gray-300 py-2 pl-3 pr-10 text-base focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm" @change="() => {edited = true}">
                           <option>Choisir</option>
                           <option v-for="transporter in transporters" :key="transporter.id" :value="transporter.id">{{ transporter.name }}</option>
                         </select>
+                        <div class="flex space-x-2 mt-2 items-center" v-if="data['tr-agent']">
+                          <input type="text" v-model="data['tr-advance']" class="w-12 block rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm" placeholder="00" @input="() => {edited = true}" />
+                          <label class="block text-sm font-medium text-gray-700">Minutes avant le RV</label>
+                        </div>
             					</dd>
                     </div>
-                    <div class="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                    <div class="px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
                       <dt class="text-sm font-medium text-gray-500">Commentaire du client</dt>
                       <dd class="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0 italic">
                         {{ data.comments || 'Aucun' }}
                       </dd>
                     </div>
-                    <div class="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                    <div v-if="isAdmin || isPartner" class="px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
                       <dt class="text-sm font-medium text-gray-500">Détails</dt>
                       <dd class="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">
                         <ul role="list" class="divide-y divide-gray-200 rounded-md border border-gray-200" v-if="data.fields">
@@ -165,19 +169,19 @@
                         <span v-else class="italic">Aucuns</span>
                       </dd>
                     </div>
-                    <div class="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6" v-if="isAdmin">
+                    <div class="px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6" v-if="isAdmin">
                       <dt class="text-sm font-medium text-gray-500">Commentaire du propriétaire</dt>
                       <dd class="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0 italic">
                         {{data['partner-comment'] || 'Aucun'}}
             					</dd>
                     </div>
-                    <div class="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6" v-if="isAdmin">
+                    <div class="px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6" v-if="isAdmin">
                       <dt class="text-sm font-medium text-gray-500">Commentaire du staff</dt>
                       <dd class="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0 italic">
 												<textarea id="about" name="about" rows="3" class="block w-full max-w-lg rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm" v-model="data['inner-comment']" @input="() => {edited = true}" />
             					</dd>
                     </div>
-                    <div v-else class="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                    <div v-else-if="isPartner" class="px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
                       <dt class="text-sm font-medium text-gray-500">Commentaire du propriétaire</dt>
                       <dd class="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0 italic">
                         <div v-if="allowcomment">
@@ -189,8 +193,8 @@
                   </dl>
                 </div>
               </div>
-              <div  class="mt-5 sm:flex sm:justify-between px-5">
-                <div v-if="isAdmin && resaType && resaType !== 'partner_calendar_confirmed'" class="sm:flex sm:justify-center space-x-2 mr-10">
+              <div  class="mt-5 sm:flex sm:justify-between px-5 sm:space-x-5">
+                <div class="sm:flex sm:justify-center space-x-2" v-if="isAdmin && resaType && resaType !== 'partner_calendar_confirmed'">
                   <button type="button" class="my-1 disabled:bg-gray-100 disabled:cursor-not-allowed inline-flex justify-center rounded-md border border-transparent bg-primary-600 px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 sm:col-start-2 sm:text-sm" @click="wsp(true)"><img class="h-5 mr-2 w-auto" src="@/assets/wsp.svg" alt="Workflow" /> Confirmer</button>
                   <button type="button" class="my-1 disabled:bg-gray-100 disabled:cursor-not-allowed inline-flex justify-center rounded-md border border-transparent bg-primary-600 px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 sm:col-start-2 sm:text-sm" @click="wsp(false)"><img class="h-5 mr-2 w-auto" src="@/assets/wsp.svg" alt="Workflow" /> Refuser</button>
                 </div>
@@ -216,6 +220,7 @@ import userService from '../services/user.service';
 import EtabList from './EtabList.vue';
 import compareAsc from 'date-fns/compareAsc';
 import Datepicker from '@vuepic/vue-datepicker'
+import subMinutes from 'date-fns/subMinutes'
 </script>
 <script>
   export default {
@@ -252,13 +257,20 @@ import Datepicker from '@vuepic/vue-datepicker'
       }
     },
     async mounted() {
+      if( this.isAdmin )
       this.transporters = await userService.getTransporters().then(({data}) => {        
         return data
       })
     },
     computed: {
       isAdmin() {
-        return JSON.parse(localStorage.user).user_role === 'administrator' || JSON.parse(localStorage.user).user_role === 'bookagent'
+        return JSON.parse(localStorage.user).user_role === 'administrator' || JSON.parse(localStorage.user).user_role === 'bookagent';
+      },
+      isPartner() {
+        return JSON.parse(localStorage.user).user_role === 'partner';
+      },
+      isTransporter() {
+        return JSON.parse(localStorage.user).user_role === 'transporter';        
       },
       offers() {
         return this.$store.state.other.offers
@@ -326,6 +338,10 @@ import Datepicker from '@vuepic/vue-datepicker'
           return format(from,'HH:mm')
         else
           return format(from,'dd-MM-yyyy à HH:mm')
+      },
+      advanceHour(time,minutes) {
+        time = new Date(time);
+        return subMinutes(time, minutes)
       },
       async updateResaData(method = () => {}) {
         this.loading = true;

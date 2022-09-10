@@ -308,7 +308,7 @@ import Loader from '../Loader.vue'
             })
           },
           active : {
-            label : 'Bientôt',
+            label : 'Résas du jour',
             resas : reservations.filter(resa => {
               return differenceInHours(new Date(resa.arrival),this.now) >= 0 && !['not-confirmed','not-confirmed-owner'].includes(resa['resa-confirmation']) && !resa.urgent
             })
@@ -325,12 +325,12 @@ import Loader from '../Loader.vue'
               return ['not-confirmed','not-confirmed-owner'].includes(resa['resa-confirmation'])
             })
           },
-          ignored : {
-            label: 'Ignorées',
-            resas : reservations.filter(resa => {
-              return differenceInHours(new Date(resa.arrival),this.now) < 0 && ['waiting'].includes(resa['resa-confirmation'])
-            })
-          },
+          // ignored : {
+          //   label: 'Ignorées',
+          //   resas : reservations.filter(resa => {
+          //     return differenceInHours(new Date(resa.arrival),this.now) < 0 && ['waiting'].includes(resa['resa-confirmation'])
+          //   })
+          // },
         };
       },
       navigation() {

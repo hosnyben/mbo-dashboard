@@ -41,10 +41,22 @@ import compareAsc from 'date-fns/compareAsc'
     computed : {
       currentcontent() {
         return this.pages[this.$route.name];
+      },
+      isAdmin() {
+        return JSON.parse(localStorage.user).user_role === 'administrator';
+      },
+      isAgent() {
+        return JSON.parse(localStorage.user).user_role === 'bookagent';
+      },
+      isPartner() {
+        return JSON.parse(localStorage.user).user_role === 'partner';
+      },
+      isTransporter() {
+        return JSON.parse(localStorage.user).user_role === 'transporter';        
       }
     },  
     mounted() {
-      this.getOffers();
+      if( !this.isTransporter ) this.getOffers();
       this.$store.dispatch('updateNavigation');
 
       const today = startOfToday();
@@ -57,26 +69,44 @@ import compareAsc from 'date-fns/compareAsc'
     },
     methods: {
       async getReservations(day) {
-        const resas = await userService.getReservations(format(day, 'Y'),format(day, 'M')).then(({data}) => {
-          return data.map(resa => {
-            return {...resa,...{urgent:isSameDay(new Date(resa.created_at),new Date(resa.arrival))}};
-          }).filter(resa => {
-            return differenceInHours(new Date(resa.arrival),this.now) >= 0
-          }).sort((a, b) => {
-            return compareAsc(new Date(a.arrival),new Date(b.arrival));
-          });
-        })
-        this.$store.dispatch('setUrgentResas', resas.filter(resa => {
-          return resa['resa-confirmation'] === 'waiting' && resa.urgent
-        }));
-        this.$store.commit('setConfirmResas', resas.filter(resa => {
-          return resa['resa-confirmation'] === 'waiting' && !resa.urgent
-        }));
-        this.$store.commit('setConfirmedResas', resas.filter(resa => {
-          return ['confirmed','confirmed-owner'].includes(resa['resa-confirmation'])
-        }));
+        if( this.isTransporter ) {
+          const resas = await userService.getTransporterReservations(format(day, 'Y'),format(day, 'M')).then(({data}) => {
+            return data.map(resa => {
+              return {...resa,...{urgent:isSameDay(new Date(resa.created_at),new Date(resa.arrival))}};
+            }).filter(resa => {
+              return differenceInHours(new Date(resa.arrival),this.now) >= 0
+            }).sort((a, b) => {
+              return compareAsc(new Date(a.arrival),new Date(b.arrival));
+            });
+          })
 
-        this.$store.dispatch('updateNavigation');
+          this.$store.commit('setConfirmedResas', resas.filter(resa => {
+            return ['confirmed','confirmed-owner'].includes(resa['resa-confirmation'])
+          }));
+  
+          this.$store.dispatch('updateNavigation');
+        }else {
+          const resas = await userService.getReservations(format(day, 'Y'),format(day, 'M')).then(({data}) => {
+            return data.map(resa => {
+              return {...resa,...{urgent:isSameDay(new Date(resa.created_at),new Date(resa.arrival))}};
+            }).filter(resa => {
+              return differenceInHours(new Date(resa.arrival),this.now) >= 0
+            }).sort((a, b) => {
+              return compareAsc(new Date(a.arrival),new Date(b.arrival));
+            });
+          })
+          this.$store.dispatch('setUrgentResas', resas.filter(resa => {
+            return resa['resa-confirmation'] === 'waiting' && resa.urgent
+          }));
+          this.$store.commit('setConfirmResas', resas.filter(resa => {
+            return resa['resa-confirmation'] === 'waiting' && !resa.urgent
+          }));
+          this.$store.commit('setConfirmedResas', resas.filter(resa => {
+            return ['confirmed','confirmed-owner'].includes(resa['resa-confirmation'])
+          }));
+  
+          this.$store.dispatch('updateNavigation');
+        }
       },
       async getOffers() {
         const projects = await userService.getOffers().then(({data}) => {
