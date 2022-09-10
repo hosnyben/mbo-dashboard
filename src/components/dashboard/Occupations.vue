@@ -49,18 +49,20 @@
   </div>
 </template>
 
-<script setup>
+<script>
   import { RouterLink } from 'vue-router'
   import userService from '../../services/user.service';
   import format from 'date-fns/format'
   import { fr } from 'date-fns/locale'
   import EtabList from '../EtabList.vue'
-import Loader from '../Loader.vue';
-</script>
-<script>
+  import Loader from '../Loader.vue';
   import { debounce } from 'lodash';
+
   export default {
     name: 'Occupations',
+    components:{
+      RouterLink,EtabList,Loader
+    },
     data() {
       return {
         enabled : false,

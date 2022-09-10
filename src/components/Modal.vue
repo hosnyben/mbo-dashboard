@@ -32,7 +32,7 @@
                   </SwitchGroup>
                 </div>
                 <div class="border-t border-gray-200">
-                  <dl>
+                  <dl class="dashed">
                     <div class="px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
                       <dt class="text-sm font-medium text-gray-500">Nom complet</dt>
                       <dd class="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">{{ data['full-name'] }}</dd>
@@ -134,7 +134,7 @@
                         </span>
                       </dd>
                     </div>
-                    <div class="px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6" v-if="isAdmin">
+                    <div class="px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6" v-if="isAdmin &&  data['tr-transport']">
                       <dt class="text-sm font-medium text-gray-500">Attribuer à un transporteur</dt>
                       <dd class="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">
                         <select v-model="data['tr-agent']" class="w-56 mt-1 block w-full rounded-md border-gray-300 py-2 pl-3 pr-10 text-base focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm" @change="() => {edited = true}">
@@ -211,20 +211,22 @@
   </TransitionRoot>
 </template>
 
-<script setup>
-import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot, Switch, SwitchGroup, SwitchLabel } from '@headlessui/vue'
-import format from 'date-fns/format'
-import isSameDay from 'date-fns/isSameDay'
-import isSameHour from 'date-fns/isSameHour'
-import userService from '../services/user.service';
-import EtabList from './EtabList.vue';
-import compareAsc from 'date-fns/compareAsc';
-import Datepicker from '@vuepic/vue-datepicker'
-import subMinutes from 'date-fns/subMinutes'
-</script>
 <script>
+  import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot, Switch, SwitchGroup, SwitchLabel } from '@headlessui/vue'
+  import format from 'date-fns/format'
+  import isSameDay from 'date-fns/isSameDay'
+  import isSameHour from 'date-fns/isSameHour'
+  import userService from '../services/user.service';
+  import EtabList from './EtabList.vue';
+  import compareAsc from 'date-fns/compareAsc';
+  import Datepicker from '@vuepic/vue-datepicker'
+  import subMinutes from 'date-fns/subMinutes'
+
   export default {
     name: 'Modal',
+    components : {
+      Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot, Switch, SwitchGroup, SwitchLabel,EtabList, Datepicker
+    },
 		props: {
 			show : {
 				type: Boolean,
@@ -406,3 +408,13 @@ import subMinutes from 'date-fns/subMinutes'
 		},
   };
 </script>
+<style lang="scss">
+  .dashed {
+    > :nth-child(2n+1) {
+      background-color: rgb(249 250 251 / 1)
+    }
+    > :nth-child(2n) {
+      background-color: white;
+    }
+  }
+</style>

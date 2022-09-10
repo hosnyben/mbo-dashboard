@@ -24,18 +24,18 @@
     </div>
   </div>
 </template>
-<script setup>
-import Datepicker from '@vuepic/vue-datepicker'
-import '@vuepic/vue-datepicker/dist/main.css'
-import { format } from 'date-fns'
-import { fr } from 'date-fns/locale'
-import startOfToday from 'date-fns/startOfToday'
-import userService from '../../services/user.service';
-import EtabList from '../EtabList.vue';
-</script>
 <script>
-export default {
-  name: 'EditOccupation',
+  import Datepicker from '@vuepic/vue-datepicker'
+  import '@vuepic/vue-datepicker/dist/main.css'
+  import { format } from 'date-fns'
+  import startOfToday from 'date-fns/startOfToday'
+  import userService from '../../services/user.service';
+  import EtabList from '../EtabList.vue';
+  export default {
+    name: 'EditOccupation',
+    components: {
+      Datepicker,EtabList
+    },
     data() {
       return {
         from: null,

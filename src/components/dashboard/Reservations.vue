@@ -105,37 +105,38 @@
   <Modal :data="selectedResa" :show="showModal" :actions="[{label:'Fermer',method:() => {showModal = false}}]" @close="showModal = false" :confirmationLabel="confirmationLabel" :allowcomment="allowcomment(selectedResa)" />
 </template>
 
-<script setup>
-import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/vue/20/solid'
-import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue'
-import { EllipsisVerticalIcon } from '@heroicons/vue/24/outline'
-import startOfToday from 'date-fns/startOfToday'
-import startOfMonth from 'date-fns/startOfMonth'
-import endOfMonth from 'date-fns/endOfMonth'
-import eachDayOfInterval from 'date-fns/eachDayOfInterval'
-import format from 'date-fns/format'
-import isSameMonth from 'date-fns/isSameMonth'
-import startOfWeek from 'date-fns/startOfWeek'
-import endOfWeek from 'date-fns/endOfWeek'
-import isToday from 'date-fns/isToday'
-import isSameDay from 'date-fns/isSameDay'
-import addMonths from 'date-fns/addMonths'
-import subMonths from 'date-fns/subMonths'
-import getMonth from 'date-fns/getMonth'
-import { fr } from 'date-fns/locale'
-import userService from '../../services/user.service'
-import isSameHour from 'date-fns/isSameHour'
-import compareAsc from 'date-fns/compareAsc'
-import differenceInHours from 'date-fns/differenceInHours'
-import Modal from '../Modal.vue'
-import EtabList from '../EtabList.vue'
-import Loader from '../Loader.vue'
-
-</script>
 <script>
+  import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/vue/20/solid'
+  import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue'
+  import { EllipsisVerticalIcon } from '@heroicons/vue/24/outline'
+  import startOfToday from 'date-fns/startOfToday'
+  import startOfMonth from 'date-fns/startOfMonth'
+  import endOfMonth from 'date-fns/endOfMonth'
+  import eachDayOfInterval from 'date-fns/eachDayOfInterval'
+  import format from 'date-fns/format'
+  import isSameMonth from 'date-fns/isSameMonth'
+  import startOfWeek from 'date-fns/startOfWeek'
+  import endOfWeek from 'date-fns/endOfWeek'
+  import isToday from 'date-fns/isToday'
+  import isSameDay from 'date-fns/isSameDay'
+  import addMonths from 'date-fns/addMonths'
+  import subMonths from 'date-fns/subMonths'
+  import getMonth from 'date-fns/getMonth'
+  import { fr } from 'date-fns/locale'
+  import userService from '../../services/user.service'
+  import isSameHour from 'date-fns/isSameHour'
+  import compareAsc from 'date-fns/compareAsc'
+  import differenceInHours from 'date-fns/differenceInHours'
+  import Modal from '../Modal.vue'
+  import EtabList from '../EtabList.vue'
+  import Loader from '../Loader.vue'
+
   import { debounce } from 'lodash';
   export default {
     name: 'Reservations',
+    components: {
+      ChevronLeftIcon, ChevronRightIcon, Menu, MenuButton, MenuItem, MenuItems, EllipsisVerticalIcon, Modal, EtabList, Loader
+    },
     data() {
       return {
         currentDay: new Date(),

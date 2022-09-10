@@ -10,7 +10,7 @@ class UserService {
     })
   }
   getReservations(year,month) {
-    return axios.get(API_URL + `get_resas/${year}/${month}`, { headers: authHeader() }).catch(({response}) => {
+    return axios.get(API_URL + `get_resass/${year}/${month}`, { headers: authHeader() }).catch(({response}) => {
       if (response.status === 403) this.forceLogout();
     })
   }

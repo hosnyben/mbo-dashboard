@@ -98,26 +98,28 @@
   <Modal :data="selectedResa" :show="showModal" :actions="[{label:'Fermer',method:() => {showModal = false}}]" @close="showModal = false" />
 </template>
 
-<script setup>
-import userService from '../../services/user.service';
-import startOfToday from 'date-fns/startOfToday';
-import getMonth from 'date-fns/getMonth';
-import format from 'date-fns/format'
-import { fr } from 'date-fns/locale'
-import addMonths from 'date-fns/addMonths'
-import subMonths from 'date-fns/subMonths'
-import isSameMonth from 'date-fns/isSameMonth'
-import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/vue/20/solid'
-import compareAsc from 'date-fns/compareAsc'
-import Modal from '../Modal.vue'
-import EtabList from '../EtabList.vue'
-import Loader from '../Loader.vue';
-import { Switch, SwitchGroup, SwitchLabel } from '@headlessui/vue'
-</script>
 <script>
+  import userService from '../../services/user.service';
+  import startOfToday from 'date-fns/startOfToday';
+  import getMonth from 'date-fns/getMonth';
+  import format from 'date-fns/format'
+  import { fr } from 'date-fns/locale'
+  import addMonths from 'date-fns/addMonths'
+  import subMonths from 'date-fns/subMonths'
+  import isSameMonth from 'date-fns/isSameMonth'
+  import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/vue/20/solid'
+  import compareAsc from 'date-fns/compareAsc'
+  import Modal from '../Modal.vue'
+  import EtabList from '../EtabList.vue'
+  import Loader from '../Loader.vue';
+  import { Switch, SwitchGroup, SwitchLabel } from '@headlessui/vue'
+
   import { debounce } from 'lodash';
   export default {
     name: 'resa',
+    components: {
+      ChevronLeftIcon, ChevronRightIcon, Switch, SwitchGroup, SwitchLabel, Modal, EtabList, Loader
+    },
     data() {
       return {
         enabled : false,

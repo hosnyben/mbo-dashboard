@@ -27,13 +27,15 @@
 	</div>
 </template>
 
-<script setup>
+<script>
 	import { CheckIcon, ChevronUpDownIcon } from '@heroicons/vue/20/solid'
 	import { Combobox,ComboboxButton,ComboboxInput,ComboboxLabel,ComboboxOption,ComboboxOptions } from '@headlessui/vue'
-</script>
-<script>
-export default {
-	name: 'EtabList',
+
+	export default {
+		name: 'EtabList',
+		components: {
+			CheckIcon,ChevronUpDownIcon,Combobox,ComboboxButton,ComboboxInput,ComboboxLabel,ComboboxOption,ComboboxOptions
+		},
 		props: {
 			class : {
 				type : String
@@ -50,66 +52,74 @@ export default {
 				default: false
 			}
 		},
-	data() {
-		return {
-			search : null,
-			currentName : null,
-			currentVal : null
-		}
-	},
-	mounted() {
-		this.currentName = this.title;
-		this.currentVal = this.modelValue;
-	},
-	watch : {
-		modelValue(){
-			if( this.currentVal !== this.modelValue ) this.currentVal = this.modelValue;
-		},
-		title(){
-			if( this.currentName !== this.title ) this.currentName = this.title;
-		},
-		currentVal(val,old) {
-			if( val !== undefined && val !== null && val !== old && val !== this.modelValue) this.$emit('update:modelValue',val);
-		},
-		currentName(val,old) {
-			if( val !== old && val !== this.title) this.$emit('update:title',val);
-		}
-	},
-	methods : {
-
-	},
-	computed: {
-		displayValue() {
-			if( this.currentVal !== undefined && this.currentVal !== null ){
-				const item = this.list.find(({value}) => value === this.currentVal);
-				return `${item?.label} ${item.count !== undefined ? `(${item?.count})`:''}`
+		data() {
+			return {
+				search : null,
+				currentName : null,
+				currentVal : null
 			}
-
-			return 'Choisir';
 		},
-		filteredResult() {
-			if( this.search )
-				return this.cleanList.filter(({label}) => {
-					return label.toLowerCase().includes(this.search.toLowerCase())
-				})
-			else
-				return this.cleanList;
+		mounted() {
+			this.currentName = this.title;
+			this.currentVal = this.modelValue;
 		},
-		cleanList() {
-			let names = [];
-
-			return this.list.filter(({label}) => {
-				if( !names.includes(label) ){
-					names.push(label)
-					return true;
+		watch : {
+			modelValue: {
+				handler (){
+					if( this.currentVal !== this.modelValue ) this.currentVal = this.modelValue;
 				}
-				return false;
-			}).sort(function(a, b) {
-				var textA = a.label.toUpperCase();
-				var textB = b.label.toUpperCase();
-				return (textA < textB) ? -1 : (textA > textB) ? 1 : 0;
-			});
+			},
+			title: {
+				handler (){
+					if( this.currentName !== this.title ) this.currentName = this.title;
+				}
+			},
+			currentVal: {
+				handler (val,old) {
+					if( val !== undefined && val !== null && val !== old && val !== this.modelValue) this.$emit('update:modelValue',val);
+				}
+			},
+			currentName: {
+				handler (val,old) {
+					if( val !== old && val !== this.title) this.$emit('update:title',val);
+				}
+			}
+		},
+		methods : {
+
+		},
+		computed: {
+			displayValue() {
+				if( this.currentVal !== undefined && this.currentVal !== null ){
+					const item = this.list.find(({value}) => value === this.currentVal);
+					return `${item?.label} ${item.count !== undefined ? `(${item?.count})`:''}`
+				}
+
+				return 'Choisir';
+			},
+			filteredResult() {
+				if( this.search )
+					return this.cleanList.filter(({label}) => {
+						return label.toLowerCase().includes(this.search.toLowerCase())
+					})
+				else
+					return this.cleanList;
+			},
+			cleanList() {
+				let names = [];
+
+				return this.list.filter(({label}) => {
+					if( !names.includes(label) ){
+						names.push(label)
+						return true;
+					}
+					return false;
+				}).sort(function(a, b) {
+					var textA = a.label.toUpperCase();
+					var textB = b.label.toUpperCase();
+					return (textA < textB) ? -1 : (textA > textB) ? 1 : 0;
+				});
+			}
 		}
-	}
-};
+	};
 </script>

@@ -55,16 +55,18 @@
   <Modal :data="selectedResa" :show="showModal" :actions="modalActions" :resaType="type" @close="showModal = false" />
 </template>
 
-<script setup>
-import format from 'date-fns/format'
-import userService from '../../services/user.service';
-import Modal from '../Modal.vue';
-import EtabList from '../EtabList.vue'
-import subMinutes from 'date-fns/subMinutes'
-</script>
 <script>
+  import format from 'date-fns/format'
+  import userService from '../../services/user.service';
+  import Modal from '../Modal.vue';
+  import EtabList from '../EtabList.vue'
+  import subMinutes from 'date-fns/subMinutes'
+
   export default {
     name: 'resa',
+    components: {
+      Modal, EtabList
+    },
     props : {
       type : {}
     },
