@@ -8,13 +8,13 @@
       <div class="fixed inset-0 z-10 overflow-y-auto">
         <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
           <TransitionChild as="template" enter="ease-out duration-300" enter-from="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" enter-to="opacity-100 translate-y-0 sm:scale-100" leave="ease-in duration-200" leave-from="opacity-100 translate-y-0 sm:scale-100" leave-to="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95">
-            <DialogPanel class="relative transform overflow-hidden rounded-lg bg-white pb-4 text-left shadow-xl transition-all sm:my-8 sm:w-full max-w-3xl">
+            <DialogPanel class="relative transform overflow-hidden rounded-lg bg-white pb-4 text-left shadow-xl transition-all sm:my-8 sm:w-full max-w-4xl">
               <div class="overflow-hidden bg-white shadow sm:rounded-lg">
                 <div class="px-4 py-5 sm:px-6">
                   <DialogTitle as="h3" class="text-lg font-medium leading-6 text-gray-900">{{ data['full-name'] }} #{{ data.id }}</DialogTitle>
                   <p class="mt-1 max-w-2xl text-sm text-gray-500">Date de réservation 
-                    <time :datetime="dateDisplay(data.arrival,data.departure)[0]">{{ dateDisplay(data.arrival,data.departure)[0] }}</time>
-                    <time :datetime="dateDisplay(data.arrival,data.departure)[1]" v-if="dateDisplay(data.arrival,data.departure)[1]"> - {{ dateDisplay(data.arrival,data.departure)[1] }}</time>
+                    <time :datetime="dateDisplayRange(data.arrival,data.departure)[0]">{{ dateDisplayRange(data.arrival,data.departure)[0] }}</time>
+                    <time :datetime="dateDisplayRange(data.arrival,data.departure)[1]" v-if="dateDisplayRange(data.arrival,data.departure)[1]"> - {{ dateDisplayRange(data.arrival,data.departure)[1] }}</time>
                   </p>
                   <span class="mr-2 inline-block flex-shrink-0 rounded-full px-2 py-0.5 text-xs font-medium bg-red-100 text-red-800" v-if="data.urgent">Dernière minute</span>
                   <span v-if="confirmationLabel[data['resa-confirmation']]" class="mr-2 inline-block flex-shrink-0 rounded-full px-2 py-0.5 text-xs font-medium" :class="confirmationLabel[data['resa-confirmation']].class">{{confirmationLabel[data['resa-confirmation']].text}}</span>
@@ -47,8 +47,22 @@
                     <div class="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
                       <dt class="text-sm font-medium text-gray-500">Établissement</dt>
                       <dd class="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">
-                        <EtabList v-if="editMode && offers.length > 1" v-model="data.project" :list="offers" />
-                        <span v-else>{{ offers.find(({value}) => value === data.project)?.label }}</span>
+                        <div v-if="editMode" class="md:space-x-10 md:flex space-y-5 md:space-y-0">
+                          <div class="w-56">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Établissement</label>
+                            <EtabList v-if="offers.length > 1" v-model="data.project" :list="offers" />
+                          </div>
+                          <div class="w-56">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Type de logement</label>
+                            <input v-if="editMode" type="text" v-model="data.logtype" class="block rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm" placeholder="Type de logement" />
+                          </div>
+                        </div>
+                        <span v-else>
+                          {{ offers.find(({value}) => value === data.project)?.label }}<br/>
+                          <span v-if="data.logtype" class="text-xs">
+                            Type de logement : {{ data.logtype }}
+                          </span>
+                        </span>
                       </dd>
                     </div>
                     <div class="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
@@ -78,6 +92,58 @@
                       </dd>
                     </div>
                     <div class="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                      <dt class="text-sm font-medium text-gray-500">Date/Heure d'arrivé</dt>
+                      <dd class="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">
+                        <div v-if="editMode" class="w-56">
+                          <Datepicker locale="fr" selectText="Choisir" cancelText="Annuler" :format="formatDay" :minDate="today" v-model="data.arrival" @update:modelValue="(val) => reformatDate(val,'arrival')"></Datepicker>
+                        </div>
+                        <span v-else>{{ dateDisplay(data.arrival) }}</span>
+                      </dd>
+                    </div>
+                    <div class="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                      <dt class="text-sm font-medium text-gray-500">Date/Heure de départ</dt>
+                      <dd class="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">
+                        <div v-if="editMode" class="w-56">
+                          <Datepicker locale="fr" selectText="Choisir" cancelText="Annuler" :format="formatDay" :minDate="today" v-model="data.departure" @update:modelValue="(val) => reformatDate(val,'departure')"></Datepicker>
+                        </div>
+                        <span v-else>{{ dateDisplay(data.departure) }}</span>
+                      </dd>
+                    </div>
+                    <div class="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                      <dt class="text-sm font-medium text-gray-500">Transport</dt>
+                      <dd class="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">
+                        <div v-if="editMode" class="md:space-x-10 md:flex space-y-5 md:space-y-0">
+                          <div class="w-56">
+                            <SwitchGroup as="div" class="flex items-center">
+                              <Switch v-model="data['tr-transport']" :class="[data['tr-transport'] ? 'bg-primary-600' : 'bg-gray-200', 'relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2']">
+                                <span aria-hidden="true" :class="[data['tr-transport'] ? 'translate-x-5' : 'translate-x-0', 'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out']" />
+                              </Switch>
+                              <SwitchLabel as="span" class="ml-3">
+                                <span class="text-sm font-medium text-gray-900">Transport</span>
+                              </SwitchLabel>
+                            </SwitchGroup>
+                          </div>
+                          <div v-if="data['tr-transport']" class="w-56">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">À récuperer de</label>
+                            <input type="text" v-model="data['tr-project']" class="block rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm" placeholder="À récuperer de" />
+                          </div>
+                        </div>
+                        <span v-else>
+                          Transport : {{ data['tr-transport'] ? 'Oui' : 'Non' }}<br />
+                          <span class="text-xs" v-if="data['tr-transport']">À récuperer de : {{ data['tr-project'] || '...' }}</span>
+                        </span>
+                      </dd>
+                    </div>
+                    <div class="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6" v-if="isAdmin">
+                      <dt class="text-sm font-medium text-gray-500">Attribuer à un transporteur</dt>
+                      <dd class="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">
+                        <select v-model="data['tr-agent']" class="w-56 mt-1 block w-full rounded-md border-gray-300 py-2 pl-3 pr-10 text-base focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm" @change="() => {edited = true}">
+                          <option>Choisir</option>
+                          <option v-for="transporter in transporters" :key="transporter.id" :value="transporter.id">{{ transporter.name }}</option>
+                        </select>
+            					</dd>
+                    </div>
+                    <div class="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
                       <dt class="text-sm font-medium text-gray-500">Commentaire du client</dt>
                       <dd class="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0 italic">
                         {{ data.comments || 'Aucun' }}
@@ -102,7 +168,7 @@
                     <div class="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6" v-if="isAdmin">
                       <dt class="text-sm font-medium text-gray-500">Commentaire du propriétaire</dt>
                       <dd class="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0 italic">
-                        {{data['partner-comment'] || '...'}}
+                        {{data['partner-comment'] || 'Aucun'}}
             					</dd>
                     </div>
                     <div class="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6" v-if="isAdmin">
@@ -123,16 +189,14 @@
                   </dl>
                 </div>
               </div>
-              <div  class="mt-5 flex justify-between px-5">
-                <div v-if="isAdmin && resaType && resaType !== 'partner_calendar_confirmed'" class="flex justify-center space-x-2 mr-10">
-                  <!-- <a target="_blank" class="button tips custom-class" href="https://wa.me/<?php echo str_replace('+','',get_field('country-phone',$post->ID)).get_field("phone",$post->ID) ?>?text=<?php echo $confirmMessage ?>">Confirmer Whatsapp</a> -->
-                  <!-- <a target="_blank" class="button tips custom-class" href="https://wa.me/<?php echo str_replace('+','',get_field('country-phone',$post->ID)).get_field("phone",$post->ID) ?>?text=<?php echo $denyMessage ?>">Refuser Whatsapp</a> -->
-                  <button type="button" class="disabled:bg-gray-100 disabled:cursor-not-allowed inline-flex justify-center rounded-md border border-transparent bg-primary-600 px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 sm:col-start-2 sm:text-sm" @click="wsp(true)"><img class="h-5 mr-2 w-auto" src="@/assets/wsp.svg" alt="Workflow" /> Confirmer</button>
-                  <button type="button" class="disabled:bg-gray-100 disabled:cursor-not-allowed inline-flex justify-center rounded-md border border-transparent bg-primary-600 px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 sm:col-start-2 sm:text-sm" @click="wsp(false)"><img class="h-5 mr-2 w-auto" src="@/assets/wsp.svg" alt="Workflow" /> Refuser</button>
+              <div  class="mt-5 sm:flex sm:justify-between px-5">
+                <div v-if="isAdmin && resaType && resaType !== 'partner_calendar_confirmed'" class="sm:flex sm:justify-center space-x-2 mr-10">
+                  <button type="button" class="my-1 disabled:bg-gray-100 disabled:cursor-not-allowed inline-flex justify-center rounded-md border border-transparent bg-primary-600 px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 sm:col-start-2 sm:text-sm" @click="wsp(true)"><img class="h-5 mr-2 w-auto" src="@/assets/wsp.svg" alt="Workflow" /> Confirmer</button>
+                  <button type="button" class="my-1 disabled:bg-gray-100 disabled:cursor-not-allowed inline-flex justify-center rounded-md border border-transparent bg-primary-600 px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 sm:col-start-2 sm:text-sm" @click="wsp(false)"><img class="h-5 mr-2 w-auto" src="@/assets/wsp.svg" alt="Workflow" /> Refuser</button>
                 </div>
-                <div class="flex justify-center space-x-2">
-                  <button :disabled="loading" v-if="edited" type="button" class="disabled:bg-gray-100 disabled:cursor-not-allowed inline-flex justify-center rounded-md border border-transparent bg-primary-600 px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 sm:col-start-2 sm:text-sm" @click="updateResaData(() => {})">Enregistrer</button>
-                  <button :disabled="loading" v-for="action in actions" type="button" class="disabled:bg-gray-100 disabled:cursor-not-allowed inline-flex justify-center rounded-md border border-transparent bg-primary-600 px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 sm:col-start-2 sm:text-sm" @click="triggerMethod(action.method)">{{(edited) ? 'Modifier et ':''}}{{ action.label }}</button>
+                <div class="sm:flex sm:justify-center space-x-2">
+                  <button :disabled="loading" v-if="edited" type="button" class="my-1 disabled:bg-gray-100 disabled:cursor-not-allowed inline-flex justify-center rounded-md border border-transparent bg-primary-600 px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 sm:col-start-2 sm:text-sm" @click="updateResaData(() => {})">Enregistrer</button>
+                  <button :disabled="loading" v-for="action in actions" type="button" class="my-1 disabled:bg-gray-100 disabled:cursor-not-allowed inline-flex justify-center rounded-md border border-transparent bg-primary-600 px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 sm:col-start-2 sm:text-sm" @click="triggerMethod(action.method)">{{(edited) ? 'Modifier et ':''}}{{ action.label }}</button>
                 </div>
               </div>
             </DialogPanel>
@@ -151,6 +215,7 @@ import isSameHour from 'date-fns/isSameHour'
 import userService from '../services/user.service';
 import EtabList from './EtabList.vue';
 import compareAsc from 'date-fns/compareAsc';
+import Datepicker from '@vuepic/vue-datepicker'
 </script>
 <script>
   export default {
@@ -182,10 +247,14 @@ import compareAsc from 'date-fns/compareAsc';
       return {
         loading : false,
         editMode : false,
-        edited : false
+        edited : false,
+        transporters : []
       }
     },
-    mounted() {
+    async mounted() {
+      this.transporters = await userService.getTransporters().then(({data}) => {        
+        return data
+      })
     },
     computed: {
       isAdmin() {
@@ -206,6 +275,9 @@ import compareAsc from 'date-fns/compareAsc';
       }
     },
 		methods: {
+      formatDay(date) {
+				return format(date, 'd-MM-Y HH:mm')
+      },
       wsp(response) {
         let text;
         
@@ -225,14 +297,14 @@ import compareAsc from 'date-fns/compareAsc';
 			closeModal() {
 				this.$emit('close')
 			},
-      dateDisplay(from,to){
+      dateDisplayRange(from,to){
         from = new Date(from);
         to = new Date(to);
 
         let data = [];
 
         if( isSameDay(from,to) )
-          data.push(format(from,'HH:mm'))
+          data.push('Aujourd\'hui à '+format(from,'HH:mm'))
         else
           data.push(format(from,'dd-MM-yyyy à HH:mm'))
 
@@ -244,6 +316,16 @@ import compareAsc from 'date-fns/compareAsc';
         }
 
         return data;
+      },
+      reformatDate(from,target){
+        this.data[target] = format(from,'yyyy-MM-dd HH:mm')
+      },
+      dateDisplay(from){
+        from = new Date(from);
+        if( this.resaType === 'partner_calendar_urgent' )
+          return format(from,'HH:mm')
+        else
+          return format(from,'dd-MM-yyyy à HH:mm')
       },
       async updateResaData(method = () => {}) {
         this.loading = true;
@@ -267,7 +349,7 @@ import compareAsc from 'date-fns/compareAsc';
                   );
                   break;
                 case 'partner_calendar_confirm':
-                  this.$store.dispatch(
+                  this.$store.commit(
                     'setConfirmResas', 
                     [
                       ...this.$store.state.other.confirmResas.filter(resa => {
@@ -280,7 +362,7 @@ import compareAsc from 'date-fns/compareAsc';
                   );
                   break;
                 case 'partner_calendar_confirmed':
-                  this.$store.dispatch(
+                  this.$store.commit(
                     'setConfirmedResas', 
                     [
                       ...this.$store.state.other.confirmedResas.filter(resa => {

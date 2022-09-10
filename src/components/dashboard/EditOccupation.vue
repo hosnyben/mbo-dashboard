@@ -70,7 +70,7 @@ export default {
     },
     methods: {
       formatDay(date) {
-				return format(date, 'd-MM-Y HH:mm',{locale: fr})
+				return format(date, 'd-MM-Y HH:mm')
       },
       async setOccupation(stay = false) {
         const data = {

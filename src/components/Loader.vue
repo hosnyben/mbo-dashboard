@@ -1,5 +1,5 @@
 <template>
-    <div class="loader">Loading...</div>
+    <div class="overflow-hidden"><div class="loader">Loading...</div></div>
 </template>
 
 <script setup>

@@ -29,21 +29,14 @@ class UserService {
       if (response.status === 403) this.forceLogout();
     })
   }
+  getTransporters() {
+    return axios.get(API_URL + `get_transporters`, { headers: authHeader() }).catch(({response}) => {
+      if (response.status === 403) this.forceLogout();
+    })
+  }
   forceLogout() {
     store.dispatch("auth/logout");
     router.push("/login");
-  }
-  getPublicContent() {
-    return axios.get(API_URL + 'all');
-  }
-  getUserBoard() {
-    return axios.get(API_URL + 'user', { headers: authHeader() });
-  }
-  getModeratorBoard() {
-    return axios.get(API_URL + 'mod', { headers: authHeader() });
-  }
-  getAdminBoard() {
-    return axios.get(API_URL + 'admin', { headers: authHeader() });
   }
 }
 export default new UserService();

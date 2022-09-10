@@ -376,11 +376,7 @@ import Loader from '../Loader.vue'
           }
         })
 
-        projects =  Object.values(projects).sort(function(a, b) {
-          var textA = a.label.toUpperCase();
-          var textB = b.label.toUpperCase();
-          return (textA < textB) ? -1 : (textA > textB) ? 1 : 0;
-        });
+        projects =  Object.values(projects);
 
         return projects.map(item => {
           return {...item,...{ count : this.dayResa[this.currentResaType]?.resas.filter(({project}) => {

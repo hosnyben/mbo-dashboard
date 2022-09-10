@@ -3,13 +3,13 @@
 		<Combobox as="div" v-model="currentVal" class="w-full">
 			<ComboboxLabel v-if="label" class="block text-sm font-medium text-gray-700">{{label}}</ComboboxLabel>
 			<div class="relative">
-				<ComboboxInput class="w-full rounded-md border border-gray-300 bg-white py-2 pl-3 pr-10 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 sm:text-sm" @change="search = $event.target.value" :display-value="(item) => item ? `${item?.label} ${item.count !== undefined ? `(${item?.count})`:''}` : 'Choisir'" />
+				<ComboboxInput class="w-full rounded-md border border-gray-300 bg-white py-2 pl-3 pr-10 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 sm:text-sm" :key="list.length" @change="search = $event.target.value" :display-value="() => { return displayValue }" />
 				<ComboboxButton class="absolute inset-y-0 right-0 flex items-center rounded-r-md px-2 focus:outline-none">
 					<ChevronUpDownIcon class="h-5 w-5 text-gray-400" aria-hidden="true" />
 				</ComboboxButton>
 	
 				<ComboboxOptions v-if="filteredResult.length > 0" class="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
-					<ComboboxOption v-for="item in filteredResult" :key="item.id" :value="item" as="template" v-slot="{ active, selected }">
+					<ComboboxOption v-for="item in filteredResult" :key="item.value" :value="item.value" as="template" v-slot="{ active, selected }">
 					<li :class="['relative cursor-default select-none py-2 pl-8 pr-4', active ? 'bg-primary-600 text-white' : 'text-gray-900']">
 						<span :class="['block truncate', selected && 'font-semibold']">
 						{{ item.label }} <span v-if="item.count !== undefined">({{item.count}})</span>
@@ -59,27 +59,56 @@ export default {
 	},
 	mounted() {
 		this.currentName = this.title;
-		this.currentVal = this.list.find(({value}) => value === this.modelValue);
+		this.currentVal = this.modelValue;
 	},
 	watch : {
-		list(){
-			this.currentVal = this.list.find(({value}) => value === this.modelValue);
+		modelValue(){
+			if( this.currentVal !== this.modelValue ) this.currentVal = this.modelValue;
+		},
+		title(){
+			if( this.currentName !== this.title ) this.currentName = this.title;
 		},
 		currentVal(val,old) {
-			if( val !== old && val !== this.modelValue) this.$emit('update:modelValue',val.value);
+			if( val !== undefined && val !== null && val !== old && val !== this.modelValue) this.$emit('update:modelValue',val);
 		},
 		currentName(val,old) {
 			if( val !== old && val !== this.title) this.$emit('update:title',val);
 		}
 	},
+	methods : {
+
+	},
 	computed: {
+		displayValue() {
+			if( this.currentVal !== undefined && this.currentVal !== null ){
+				const item = this.list.find(({value}) => value === this.currentVal);
+				return `${item?.label} ${item.count !== undefined ? `(${item?.count})`:''}`
+			}
+
+			return 'Choisir';
+		},
 		filteredResult() {
 			if( this.search )
-				return this.list.filter(({label}) => {
+				return this.cleanList.filter(({label}) => {
 					return label.toLowerCase().includes(this.search.toLowerCase())
 				})
 			else
-				return this.list;
+				return this.cleanList;
+		},
+		cleanList() {
+			let names = [];
+
+			return this.list.filter(({label}) => {
+				if( !names.includes(label) ){
+					names.push(label)
+					return true;
+				}
+				return false;
+			}).sort(function(a, b) {
+				var textA = a.label.toUpperCase();
+				var textB = b.label.toUpperCase();
+				return (textA < textB) ? -1 : (textA > textB) ? 1 : 0;
+			});
 		}
 	}
 };
