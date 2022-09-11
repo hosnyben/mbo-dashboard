@@ -117,6 +117,9 @@
 				}).sort(function(a, b) {
 					var textA = a.label.toUpperCase();
 					var textB = b.label.toUpperCase();
+
+					if( b.value === 0 ) return 1;
+
 					return (textA < textB) ? -1 : (textA > textB) ? 1 : 0;
 				});
 			}
