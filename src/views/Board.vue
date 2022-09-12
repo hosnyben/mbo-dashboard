@@ -116,7 +116,6 @@ import compareAsc from 'date-fns/compareAsc'
               label : name
             }
           })
-          
           return offers
         })
 

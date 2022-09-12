@@ -4,7 +4,7 @@
       <div class="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
         <div class="space-y-6">
           <div>
-            <EtabList v-model="selectedOffer" :list="offers" v-if="offers.length" class="mt-5" />
+            <EtabList v-model="selectedOffer" :list="offers" v-if="offers.length && !editing" class="mt-5" />
 					</div>
           <div>
 						<label class="block text-sm font-medium text-gray-700 mb-1">Période d'occupation</label>
