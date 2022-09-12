@@ -7,6 +7,7 @@ export default {
         urgentResas : [],
         confirmResas : [],
         confirmedResas : [],
+        refusedResas : [],
         offers : []
     },
     mutations: {
@@ -21,6 +22,9 @@ export default {
         },
         setConfirmedResas(state,resas) {
             state.confirmedResas = resas
+        },
+        setRefusedResas(state,resas) {
+            state.refusedResas = resas
         },
         setOffers(state,offers) {
             state.offers = offers
@@ -51,6 +55,12 @@ export default {
 
             if( isAdmin || isAgent || isTransport )
                 navigation = [...navigation,...[{ current : router.path === '/partenaire/reservations-confirme',name: 'Réservations confirmées', href: '/partenaire/reservations-confirme', icon: Bars3BottomRightIcon, description: 'List des réservations confirmées', count: state.confirmedResas.length }]];
+            
+
+            if( isAdmin || isAgent ) 
+                navigation = [...navigation,...[
+                    { current : router.path === '/partenaire/reservations-refusee',name: 'Réservations Refusées', href: '/partenaire/reservations-refusee', icon: Bars3BottomRightIcon, description: 'Réservations refusées.', count: state.refusedResas.length }
+                ]];    
                 
             if( !isTransport )
                 navigation = [...navigation,...[

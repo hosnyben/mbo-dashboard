@@ -312,27 +312,31 @@
           active : {
             label : 'Résas du jour',
             resas : reservations.filter(resa => {
-              return differenceInHours(new Date(resa.arrival),this.now) >= 0 && !['not-confirmed','not-confirmed-owner'].includes(resa['resa-confirmation']) && !resa.urgent
+              return !['not-confirmed','not-confirmed-owner'].includes(resa['resa-confirmation']) && !resa.urgent
             })
           },
+          /*
           done : {
             label : 'Reçues',
             resas : reservations.filter(resa => {
               return differenceInHours(new Date(resa.arrival),this.now) < 0 && ['confirmed','confirmed-owner'].includes(resa['resa-confirmation'])
             })
           },
+          */
           refused : {
             label : 'Refusées',
             resas : reservations.filter(resa => {
               return ['not-confirmed','not-confirmed-owner'].includes(resa['resa-confirmation'])
             })
           },
-          // ignored : {
-          //   label: 'Ignorées',
-          //   resas : reservations.filter(resa => {
-          //     return differenceInHours(new Date(resa.arrival),this.now) < 0 && ['waiting'].includes(resa['resa-confirmation'])
-          //   })
-          // },
+          /*
+          ignored : {
+            label: 'Ignorées',
+            resas : reservations.filter(resa => {
+              return differenceInHours(new Date(resa.arrival),this.now) < 0 && ['waiting'].includes(resa['resa-confirmation'])
+            })
+          },
+          */
         };
       },
       navigation() {

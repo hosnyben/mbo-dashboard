@@ -30,6 +30,11 @@ const router = createRouter({
       component: Board,
     },
     {
+      path: '/partenaire/reservations-refusee',
+      name: 'partner_calendar_refused',
+      component: Board,
+    },
+    {
       path: '/partenaire/occupations',
       name: 'partner_closing',
       component: Board,

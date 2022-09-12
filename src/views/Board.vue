@@ -33,6 +33,7 @@ import compareAsc from 'date-fns/compareAsc'
           'partner_stats' : StatsVue,
           'partner_calendar_confirm' : ToConfirm,
           'partner_calendar_confirmed' : ToConfirm,
+          'partner_calendar_refused' : ToConfirm,
           'partner_calendar_urgent' : ToConfirm,
         },
         now : Date.now()
@@ -103,6 +104,9 @@ import compareAsc from 'date-fns/compareAsc'
           }));
           this.$store.commit('setConfirmedResas', resas.filter(resa => {
             return ['confirmed','confirmed-owner'].includes(resa['resa-confirmation'])
+          }));
+          this.$store.commit('setRefusedResas', resas.filter(resa => {
+            return ['not-confirmed','not-confirmed-owner'].includes(resa['resa-confirmation'])
           }));
   
           this.$store.dispatch('updateNavigation');
