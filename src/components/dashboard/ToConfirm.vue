@@ -28,7 +28,7 @@
             :current-page="currentPage"
             :per-page="itemPerPage"
             @page-changed="changePage"
-            class="w-full"
+            class="w-full pagination"
           />
         </div>
       </div>
@@ -40,7 +40,7 @@
               <th scope="col" class="hidden px-3 py-3.5 text-left text-sm font-semibold text-gray-900 lg:table-cell">Établissement</th>
               <th scope="col" class="hidden px-3 py-3.5 text-left text-sm font-semibold text-gray-900 lg:table-cell">Nom du client</th>
               <th scope="col" class="hidden px-3 py-3.5 text-left text-sm font-semibold text-gray-900 lg:table-cell">Nombre de personnes</th>
-              <th scope="col" class="hidden px-3 py-3.5 text-left text-sm font-semibold text-gray-900 lg:table-cell">{{isTransporter?'Pickup':'Arrivé'}}</th>
+              <th scope="col" class="hidden px-3 py-3.5 text-left text-sm font-semibold text-gray-900 lg:table-cell">Arrivée</th>
               <th scope="col" class="relative py-3.5 pl-3 pr-4 sm:pr-6">
                 <span class="sr-only">Edit</span>
               </th>
@@ -51,7 +51,7 @@
               <td class="w-full max-w-0 py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:w-auto sm:max-w-none sm:pl-6">
                 #{{ resa.id }}
                 <br/>
-                <span v-if="isAdmin" class="inline-block flex-shrink-0 rounded-full px-2 py-0.5 text-xs font-medium" :class="{'bg-primary-100 text-white':currentAgent(resa),'bg-gray-100 text-gray-900':!currentAgent(resa)}">{{currentAgent(resa) || 'Aucun agent' }}</span>
+                <span class="inline-block flex-shrink-0 rounded-full px-2 py-0.5 text-xs font-medium" :class="{'bg-primary-100 text-white':currentAgent(resa),'bg-gray-100 text-gray-900':!currentAgent(resa)}">{{currentAgent(resa) || 'Aucun agent' }}</span>
                 <dl class="font-normal lg:hidden">
                   <dt class="sr-only">Établissement</dt>
                   <dd class="mt-1 truncate text-gray-500 text-xs"><span style="display: inline-block;" class="font-semibold">Établissement : </span> {{ offers.find(({value}) => value === resa.project)?.label || resa.project_name }}</dd>      
@@ -60,13 +60,13 @@
                   <dt class="sr-only">Pax</dt>
                   <dd class="mt-1 truncate text-gray-500 text-xs"><span style="display: inline-block;" class="font-semibold">Pax : </span> {{ resa['nbr-adult'] }} Adultes - {{ resa['nbr-children'] || 0 }} Enfants</dd>      
                   <dt class="sr-only">Date/Here de début</dt>
-                  <dd class="mt-1 truncate text-gray-500 text-xs"><span style="display: inline-block;" class="font-semibold">Arrivé : </span> {{ isTransporter?dateDisplay(advanceHour(resa.arrival,resa['tr-advance'] ? parseInt(resa['tr-advance']) : 0 )):dateDisplay(resa.arrival) }}</dd>
+                  <dd class="mt-1 truncate text-gray-500 text-xs"><span style="display: inline-block;" class="font-semibold">Arrivé : </span> {{ dateDisplay(resa.arrival) }}</dd>
                 </dl>
               </td>
               <td class="hidden px-3 py-4 text-sm text-gray-500 lg:table-cell">{{ offers.find(({value}) => value === resa.project)?.label || resa.project_name }}</td>
               <td class="hidden px-3 py-4 text-sm text-gray-500 lg:table-cell cusrsor-pointer">{{ resa['full-name'] }}</td>
               <td class="hidden px-3 py-4 text-sm text-gray-500 lg:table-cell">{{ resa['nbr-adult'] }} Adultes - {{ resa['nbr-children'] || 0 }} Enfants</td>
-              <td class="hidden px-3 py-4 text-sm text-gray-500 lg:table-cell">{{ isTransporter?dateDisplay(advanceHour(resa.arrival,resa['tr-advance'] ? parseInt(resa['tr-advance']) : 0 )):dateDisplay(resa.arrival) }}</td>
+              <td class="hidden px-3 py-4 text-sm text-gray-500 lg:table-cell">{{ dateDisplay(resa.arrival) }}</td>
               <td class="py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
                 <span class="text-primary-600 hover:text-primary-900 cursor-pointer" @click="selectResa(resa)">Détails</span>
               </td>
@@ -80,7 +80,7 @@
             :current-page="currentPage"
             :per-page="itemPerPage"
             @page-changed="changePage"
-            class="w-full"
+            class="w-full pagination"
           />
         </div>
       </div>
@@ -138,10 +138,9 @@
     },
     async mounted() {
       this.currentProject = this.projects[0]?.value
-      if( this.isAdmin )
-        this.staff = await userService.getAdmins().then(({data}) => {        
-          return data
-        })
+      this.staff = await userService.getAdmins().then(({data}) => {        
+        return data
+      })
 
       const today = startOfToday();
       this.currentDay = today;
@@ -178,24 +177,13 @@
       isUrgent() {
         return this.type === 'partner_calendar_urgent';
       },
-      isAdmin() {
-        return JSON.parse(localStorage.user).user_role === 'administrator' || JSON.parse(localStorage.user).user_role === 'bookagent';
-      },
-      isPartner() {
-        return JSON.parse(localStorage.user).user_role === 'partner';
-      },
-      isTransporter() {
-        return JSON.parse(localStorage.user).user_role === 'transporter';        
-      },
       modalActions() {
-        let actions = [{label:'Fermer',method: () => { this.showModal = false } }];
+        let actions = [];
 
-        if( this.isAdmin ) {
-          if( this.type === 'partner_calendar_urgent' || this.type === 'partner_calendar_confirm' || this.type === 'partner_calendar_refused' )
-            actions = [...actions,...[{label:'Confirmer',method: () => { this.confirmResa(this.selectedResa.id) } }]];
-          if( this.type === 'partner_calendar_urgent' || this.type === 'partner_calendar_confirm' || this.type === 'partner_calendar_confirmed' )
-            actions = [...actions,...[{label:'Refuser',method: () => { this.denyResa(this.selectedResa.id) } }]];
-        }
+        if( this.type === 'partner_calendar_urgent' || this.type === 'partner_calendar_confirm' || this.type === 'partner_calendar_refused' )
+          actions = [...actions,...[{label:'Confirmer',method: () => { this.confirmResa(this.selectedResa.id) } }]];
+        if( this.type === 'partner_calendar_urgent' || this.type === 'partner_calendar_confirm' || this.type === 'partner_calendar_confirmed' )
+          actions = [...actions,...[{label:'Refuser',method: () => { this.denyResa(this.selectedResa.id) } }]];
         
         return actions;
       },
@@ -223,7 +211,7 @@
       },
       currentReservationsFiltered () {
         if(this.currentProject || this.fullname)
-          return this.currentReservations.filter(({project,...resa}) => ( !this.currentProject || project === this.currentProject ) && ( !this.fullname || resa['full-name'].includes(this.fullname) ))
+          return this.currentReservations.filter(({project,...resa}) => ( !this.currentProject || project === this.currentProject ) && ( !this.fullname || resa['full-name'].toLowerCase().includes(this.fullname.toLowerCase()) ))
         else{
           const from = (this.currentPage - 1) * this.itemPerPage;
           const to = this.currentPage * this.itemPerPage
@@ -283,30 +271,29 @@
         this.getReservationsAjax(day);
       },
       getReservationsAjax : debounce(async function (day) {
-        this.reservations = await userService.getReservations(format(day, 'Y'),format(day, 'M')).then(({data}) => {
-            this.loading = false;
-            let projects = {};
+        await userService.getReservations(format(day, 'Y'),format(day, 'M')).then(({data}) => {
+          this.loading = false;
 
-            const cleanData = data.sort((a, b) => {
-              return compareAsc(new Date(a.arrival),new Date(b.arrival));
-            });
-            
-            cleanData.forEach(({project_name,project}) => {
-              if( !projects[project] && project_name ) projects[project] = {
-                value : project,
-                label : project_name
-              }
-            })
-
-            this.projects = Object.values(projects).sort(function(a, b) {
-              var textA = a.label.toUpperCase();
-              var textB = b.label.toUpperCase();
-              return (textA < textB) ? -1 : (textA > textB) ? 1 : 0;
-            });
-
-            this.selectedProject = this.projects[0].value
-            return cleanData
+          this.reservations = data['resas'].sort((a, b) => {
+            return compareAsc(new Date(a.arrival),new Date(b.arrival));
           });
+          
+          let projects = {};
+          this.reservations.forEach(({project_name,project}) => {
+            if( !projects[project] && project_name ) projects[project] = {
+              value : project,
+              label : project_name
+            }
+          })
+
+          this.projects = Object.values(projects).sort(function(a, b) {
+            var textA = a.label.toUpperCase();
+            var textB = b.label.toUpperCase();
+            return (textA < textB) ? -1 : (textA > textB) ? 1 : 0;
+          });
+
+          this.selectedProject = this.projects[0].value
+        });
       },2000),
 			setCurrentDay(day) {
         this.loading = false;

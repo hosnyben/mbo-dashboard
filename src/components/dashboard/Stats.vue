@@ -22,7 +22,7 @@
     <h3 class="text-lg font-medium leading-6 text-gray-900">Statistiques</h3>
     <Loader v-if="loading" />
     <div v-else>
-      <div>
+      <div class="mb-4">
         <EtabList v-model="selectedProject" :list="projects" v-if="projects.length > 1" class="mb-5" />
         <dl class="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-3">
           <div v-for="item in stats" :key="item.name" class="overflow-hidden rounded-lg bg-white px-4 py-5 shadow sm:p-6">
@@ -32,8 +32,8 @@
         </dl>
       </div>
 
-      <div class="py-4">
-        <SwitchGroup as="div" class="flex items-center">
+      <div v-if="!isTransporter">
+        <SwitchGroup as="div" class="flex items-center mb-5">
           <Switch v-model="ownercomment" :class="[ownercomment ? 'bg-primary-600' : 'bg-gray-200', 'relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2']">
             <span aria-hidden="true" :class="[ownercomment ? 'translate-x-5' : 'translate-x-0', 'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out']" />
           </Switch>
@@ -42,9 +42,18 @@
             <span class="text-sm text-gray-500"> (Afficher les réservations avec commentaire du propriétaire)</span>
           </SwitchLabel>
         </SwitchGroup>
+        <SwitchGroup as="div" class="flex items-center">
+          <Switch v-model="noShow" :class="[noShow ? 'bg-primary-600' : 'bg-gray-200', 'relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2']">
+            <span aria-hidden="true" :class="[noShow ? 'translate-x-5' : 'translate-x-0', 'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out']" />
+          </Switch>
+          <SwitchLabel as="span" class="ml-3">
+            <span class="text-sm font-medium text-gray-900">No Show</span>
+            <span class="text-sm text-gray-500"> (Afficher les réservations no show)</span>
+          </SwitchLabel>
+        </SwitchGroup>
       </div>
 
-      <div class="overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg mb-5">
+      <div class="overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg mb-5 mt-4">
         <table class="min-w-full divide-y divide-gray-300">
           <thead class="bg-gray-50">
             <tr>
@@ -130,6 +139,7 @@
         projects : [],
         showModal: false,
         selectedProject : null,
+        noShow: false,
         ownercomment: false
       }
     },
@@ -138,6 +148,9 @@
       this.setCurrentDay(subMonths(today,1));
     },
     computed: {
+      isTransporter() {
+        return JSON.parse(localStorage.user).user_role === 'transporter';        
+      },
 			monthYear() {
 				return format(this.currentDay || startOfToday(), 'MMMM Y',{locale: fr});
 			},
@@ -155,7 +168,7 @@
       },
       currentReservations() {
         return this.reservations.filter(({project,...resa}) => {
-          return project === this.selectedProject && ( !this.ownercomment || resa['partner-comment'] )
+          return project === this.selectedProject && ( !this.ownercomment || resa['partner-comment'] ) && ( !this.noShow || resa.no_show )
         })
       },
       stats() {
@@ -201,31 +214,30 @@
         this.getReservationsAjax(day);
       },
       getReservationsAjax : debounce(async function (day) {
-        this.reservations = await userService.getReservations(format(day, 'Y'),format(day, 'M')).then(({data}) => {
-            this.loading = false;
-            let projects = {}
-            const cleanData = data.filter(resa => {
-              return ['confirmed','confirmed-owner'].includes(resa['resa-confirmation']);
-            }).sort((a, b) => {
-              return compareAsc(new Date(a.arrival),new Date(b.arrival));
-            });
-            
-            cleanData.forEach(({project_name,project}) => {
-              if( !projects[project] && project_name ) projects[project] = {
-                value : project,
-                label : project_name
-              }
-            })
-
-            this.projects = Object.values(projects).sort(function(a, b) {
-              var textA = a.label.toUpperCase();
-              var textB = b.label.toUpperCase();
-              return (textA < textB) ? -1 : (textA > textB) ? 1 : 0;
-            });
-
-            this.selectedProject = this.projects[0].value
-            return cleanData
+        await userService.getReservations(format(day, 'Y'),format(day, 'M')).then(({data}) => {
+          this.loading = false;
+          this.reservations = data['resas'].filter(resa => {
+            return ['confirmed','confirmed-owner'].includes(resa['resa-confirmation']);
+          }).sort((a, b) => {
+            return compareAsc(new Date(a.arrival),new Date(b.arrival));
           });
+          
+          let projects = {}
+          this.reservations.forEach(({project_name,project}) => {
+            if( !projects[project] && project_name ) projects[project] = {
+              value : project,
+              label : project_name
+            }
+          })
+
+          this.projects = Object.values(projects).sort(function(a, b) {
+            var textA = a.label.toUpperCase();
+            var textB = b.label.toUpperCase();
+            return (textA < textB) ? -1 : (textA > textB) ? 1 : 0;
+          });
+
+          this.selectedProject = this.projects[0].value
+        });
       },2000),
       dateDisplay(from,to){
         from = new Date(from);

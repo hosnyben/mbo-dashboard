@@ -35,6 +35,11 @@ const router = createRouter({
       component: Board,
     },
     {
+      path: '/partenaire/reservations-liste',
+      name: 'partner_calendar_all',
+      component: Board,
+    },
+    {
       path: '/partenaire/occupations',
       name: 'partner_closing',
       component: Board,

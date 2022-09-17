@@ -194,12 +194,13 @@
                 </div>
               </div>
               <div  class="mt-5 sm:flex sm:justify-between px-5 sm:space-x-5">
-                <div class="sm:flex sm:justify-center space-x-2" v-if="isAdmin && resaType && resaType !== 'partner_calendar_confirmed'">
+                <div class="sm:flex sm:justify-center space-x-2" v-if="isAdmin">
                   <button type="button" class="my-1 disabled:bg-gray-100 disabled:cursor-not-allowed inline-flex justify-center rounded-md border border-transparent bg-primary-600 px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 sm:col-start-2 sm:text-sm" @click="wsp(true)"><img class="h-5 mr-2 w-auto" src="@/assets/wsp.svg" alt="Workflow" /> Confirmer</button>
                   <button type="button" class="my-1 disabled:bg-gray-100 disabled:cursor-not-allowed inline-flex justify-center rounded-md border border-transparent bg-primary-600 px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 sm:col-start-2 sm:text-sm" @click="wsp(false)"><img class="h-5 mr-2 w-auto" src="@/assets/wsp.svg" alt="Workflow" /> Refuser</button>
+                  <button type="button" class="my-1 disabled:bg-gray-100 disabled:cursor-not-allowed inline-flex justify-center rounded-md border border-transparent bg-primary-600 px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 sm:col-start-2 sm:text-sm" @click="wspPartner(this.offers.find(({value}) => value === this.data.project)?.phone)"><img class="h-5 mr-2 w-auto" src="@/assets/wsp.svg" alt="Workflow" /> Partenair</button>
                 </div>
                 <div class="sm:flex sm:justify-center space-x-2">
-                  <button :disabled="loading" v-if="edited" type="button" class="my-1 disabled:bg-gray-100 disabled:cursor-not-allowed inline-flex justify-center rounded-md border border-transparent bg-primary-600 px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 sm:col-start-2 sm:text-sm" @click="updateResaData(() => {})">Enregistrer</button>
+                  <button :disabled="loading" v-if="edited" type="button" class="my-1 disabled:bg-gray-100 disabled:cursor-not-allowed inline-flex justify-center rounded-md border border-transparent bg-primary-600 px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 sm:col-start-2 sm:text-sm" @click="updateResaData(() => {})">Modifier</button>
                   <button :disabled="loading" v-for="action in actions" type="button" class="my-1 disabled:bg-gray-100 disabled:cursor-not-allowed inline-flex justify-center rounded-md border border-transparent bg-primary-600 px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 sm:col-start-2 sm:text-sm" @click="triggerMethod(action.method)">{{(edited) ? 'Modifier et ':''}}{{ action.label }}</button>
                 </div>
               </div>
@@ -301,6 +302,24 @@
           text = `Bonjour ${this.data['full-name']}, vous venez de réserver sur Marrakech Best Of. Votre réservation a été refusée par l'établissement car c'est complet. Souhaitez vous aller ailleurs ?`;
         
         window.open(`https://wa.me/${this.data['country-phone'].replace('+','')}${this.data.phone}?text=${text}`,'_blank');
+      },
+      wspPartner(phone) {
+        const br = '%0a';
+
+        let text = `Bonjour, Vous avez une nouvelle réservation : ${br}Nom : ${this.data['full-name']}${br}Nombre de personnes: ${this.data['nbr-adult']} Adulte(s) et ${this.data['nbr-children'] || 0} Enfant(s)${br}Arrivée : ${this.formatDay(new Date(this.data.arrival))}${br}${this.data.arrival !== this.data.departure ? `Départ : ${this.formatDay(new Date(this.data.departure))}${br}`:''}`;
+
+        if( this.data.fields.length ){
+          text += `------`
+          this.data.fields.forEach(({placeholder,value}) => {
+            text += `${br}"${placeholder}" : ${value}`
+          });
+          text += `${br}------${br}`
+        }
+
+        if( this.data['comments'] )
+          text += `Commentaire du client : ${this.data['comments']}${br}`;
+
+        window.open(`https://wa.me/${phone}?text=${text}`,'_blank');
       },
       triggerMethod(method = () => {}){
         if( this.edited )

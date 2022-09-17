@@ -4,13 +4,8 @@ import store from '../store';
 import authHeader from './auth-header';
 const API_URL = 'https://www.marrakechbestof.com/wp-json/mbo/v1/';
 class UserService {
-  getTransporterReservations(year,month) {
-    return axios.get(API_URL + `get_trans_resas/${year}/${month}`, { headers: authHeader() }).catch(({response}) => {
-      if (response.status === 403) this.forceLogout();
-    })
-  }
-  getReservations(year,month) {
-    return axios.get(API_URL + `get_resas/${year}/${month}`, { headers: authHeader() }).catch(({response}) => {
+  getReservations(year = null,month = null, page = null) {
+    return axios.get(API_URL + `get_resas${year?'/'+year:''}${month?'/'+month:''}${page?'?page='+page:''}`, { headers: authHeader() }).catch(({response}) => {
       if (response.status === 403) this.forceLogout();
     })
   }

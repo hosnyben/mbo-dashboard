@@ -18,6 +18,7 @@ import startOfToday from 'date-fns/startOfToday'
 import userService from '../services/user.service'
 import format from 'date-fns/format'
 import compareAsc from 'date-fns/compareAsc'
+import AllResasVue from '../components/dashboard/AllResas.vue'
 </script>
 <script>
   export default {
@@ -35,6 +36,7 @@ import compareAsc from 'date-fns/compareAsc'
           'partner_calendar_confirmed' : ToConfirm,
           'partner_calendar_refused' : ToConfirm,
           'partner_calendar_urgent' : ToConfirm,
+          'partner_calendar_all' : AllResasVue,
         },
         now : Date.now()
       };
@@ -57,67 +59,53 @@ import compareAsc from 'date-fns/compareAsc'
       }
     },  
     mounted() {
-      if( !this.isTransporter ) this.getOffers();
       this.$store.dispatch('updateNavigation');
 
-      const today = startOfToday();
-      this.getReservations(today);
-
-      setInterval(() => {
-        this.now = Date.now();
+      if( this.isAdmin || this.isAgent || this.isPartner ) {
+        this.getOffers();
+  
+        const today = startOfToday();
         this.getReservations(today);
-      }, 1000*60*5); // Refresh in 10 minutes
+  
+        setInterval(() => {
+          this.now = Date.now();
+          this.getReservations(today);
+        }, 1000*60*5); // Refresh in 10 minutes
+      }
     },
     methods: {
       async getReservations(day) {
-        if( this.isTransporter ) {
-          const resas = await userService.getTransporterReservations(format(day, 'Y'),format(day, 'M')).then(({data}) => {
-            return data.map(resa => {
-              return {...resa,...{urgent:isSameDay(new Date(resa.created_at),new Date(resa.arrival))}};
-            }).filter(resa => {
-              return differenceInHours(new Date(resa.arrival),this.now) >= 0
-            }).sort((a, b) => {
-              return compareAsc(new Date(a.arrival),new Date(b.arrival));
-            });
-          })
+        const resas = await userService.getReservations(format(day, 'Y'),format(day, 'M')).then(({data}) => {
+          return data['resas'].map(resa => {
+            return {...resa,...{urgent:isSameDay(new Date(resa.created_at),new Date(resa.arrival))}};
+          }).filter(resa => {
+            return differenceInHours(new Date(resa.arrival),this.now) >= 0
+          }).sort((a, b) => {
+            return compareAsc(new Date(a.arrival),new Date(b.arrival));
+          });
+        })
+        this.$store.dispatch('setUrgentResas', resas.filter(resa => {
+          return resa['resa-confirmation'] === 'waiting' && resa.urgent
+        }));
+        this.$store.commit('setConfirmResas', resas.filter(resa => {
+          return resa['resa-confirmation'] === 'waiting' && !resa.urgent
+        }));
+        this.$store.commit('setConfirmedResas', resas.filter(resa => {
+          return ['confirmed','confirmed-owner'].includes(resa['resa-confirmation'])
+        }));
+        this.$store.commit('setRefusedResas', resas.filter(resa => {
+          return ['not-confirmed','not-confirmed-owner'].includes(resa['resa-confirmation'])
+        }));
 
-          this.$store.commit('setConfirmedResas', resas.filter(resa => {
-            return ['confirmed','confirmed-owner'].includes(resa['resa-confirmation'])
-          }));
-  
-          this.$store.dispatch('updateNavigation');
-        }else {
-          const resas = await userService.getReservations(format(day, 'Y'),format(day, 'M')).then(({data}) => {
-            return data.map(resa => {
-              return {...resa,...{urgent:isSameDay(new Date(resa.created_at),new Date(resa.arrival))}};
-            }).filter(resa => {
-              return differenceInHours(new Date(resa.arrival),this.now) >= 0
-            }).sort((a, b) => {
-              return compareAsc(new Date(a.arrival),new Date(b.arrival));
-            });
-          })
-          this.$store.dispatch('setUrgentResas', resas.filter(resa => {
-            return resa['resa-confirmation'] === 'waiting' && resa.urgent
-          }));
-          this.$store.commit('setConfirmResas', resas.filter(resa => {
-            return resa['resa-confirmation'] === 'waiting' && !resa.urgent
-          }));
-          this.$store.commit('setConfirmedResas', resas.filter(resa => {
-            return ['confirmed','confirmed-owner'].includes(resa['resa-confirmation'])
-          }));
-          this.$store.commit('setRefusedResas', resas.filter(resa => {
-            return ['not-confirmed','not-confirmed-owner'].includes(resa['resa-confirmation'])
-          }));
-  
-          this.$store.dispatch('updateNavigation');
-        }
+        this.$store.dispatch('updateNavigation');
       },
       async getOffers() {
         const projects = await userService.getOffers().then(({data}) => {
-          const offers = data.map(({id,name}) => {
+          const offers = data.map(({id,name,phone}) => {
             return {
               value : id,
-              label : name
+              label : name,
+              phone : phone
             }
           })
           return offers
@@ -128,3 +116,16 @@ import compareAsc from 'date-fns/compareAsc'
     }
   };
 </script>
+<style lang="scss">
+	.pagination {
+		a {
+			&.bg-indigo-50 {
+				background-color: #e4e0d7;
+        cursor: not-allowed;
+			}
+			&:hover {
+				background-color: #fcf9f3 !important;
+			}
+		}
+	}
+</style>

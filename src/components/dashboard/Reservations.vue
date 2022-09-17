@@ -67,7 +67,12 @@
                   </p>
                   <p class="mt-0.5">
                     <time :datetime="dateDisplay(reservation.arrival,reservation.departure)[0]">{{ dateDisplay(reservation.arrival,reservation.departure)[0] }}</time>
-                    <time :datetime="dateDisplay(reservation.arrival,reservation.departure)[1]" v-if="dateDisplay(reservation.arrival,reservation.departure)[1]"> - {{ dateDisplay(reservation.arrival,reservation.departure)[1] }}</time>
+                    <time :datetime="dateDisplay(reservation.arrival,reservation.departure)[1]" v-if="dateDisplay(reservation.arrival,reservation.departure)[1]"> - {{ dateDisplay(reservation.arrival,reservation.departure)[1] }}</time> - 
+                    <span>{{ reservation['nbr-adult'] }} Adultes</span>
+                    <span v-if="reservation['nbr-children']"> et {{ reservation['nbr-children'] }} Enfants</span>
+                  </p>
+                  <p class="mt-0.5 italic" v-if="reservation.comments">
+                    {{ reservation.comments }}
                   </p>
                 </div>
                 <Menu as="div" class="relative opacity-0 focus-within:opacity-100 group-hover:opacity-100">
@@ -81,13 +86,16 @@
                   <transition enter-active-class="transition ease-out duration-100" enter-from-class="transform opacity-0 scale-95" enter-to-class="transform opacity-100 scale-100" leave-active-class="transition ease-in duration-75" leave-from-class="transform opacity-100 scale-100" leave-to-class="transform opacity-0 scale-95">
                     <MenuItems class="absolute right-0 z-10 mt-2 w-36 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
                       <div class="py-1">
+                        <MenuItem v-slot="{ active }" v-if="isPartner && oldResa(reservation) && ['urgent','active'].includes(currentResaType) && ['confirmed','confirmed-owner'].includes(reservation['resa-confirmation'])">
+                          <span @click="noShowResa(reservation.id)" :class="[active ? 'bg-gray-100 text-gray-900' : 'text-gray-700', 'block px-4 py-2 text-sm cursor-pointer']">No Show</span>
+                        </MenuItem>
                         <MenuItem v-slot="{ active }">
                           <span @click="selectResa(reservation)" :class="[active ? 'bg-gray-100 text-gray-900' : 'text-gray-700', 'block px-4 py-2 text-sm cursor-pointer']">Détails</span>
                         </MenuItem>
-                        <MenuItem v-slot="{ active }" v-if="['urgent','active'].includes(currentResaType) && ['not-confirmed','not-confirmed-owner','waiting'].includes(reservation['resa-confirmation'])">
+                        <MenuItem v-slot="{ active }" v-if="(isAdmin || isPartner) && ['urgent','active'].includes(currentResaType) && ['not-confirmed','not-confirmed-owner','waiting'].includes(reservation['resa-confirmation'])">
                           <span @click="confirmResa(reservation.id)" :class="[active ? 'bg-gray-100 text-gray-900' : 'text-gray-700', 'block px-4 py-2 text-sm cursor-pointer']">Accepter</span>
                         </MenuItem>
-                        <MenuItem v-slot="{ active }" v-if="['urgent','active'].includes(currentResaType) && ['confirmed','confirmed-owner','waiting'].includes(reservation['resa-confirmation'])">
+                        <MenuItem v-slot="{ active }" v-if="(isAdmin || isPartner) && ['urgent','active'].includes(currentResaType) && ['confirmed','confirmed-owner','waiting'].includes(reservation['resa-confirmation'])">
                           <span @click="denyResa(reservation.id)" :class="[active ? 'bg-gray-100 text-gray-900' : 'text-gray-700', 'block px-4 py-2 text-sm cursor-pointer']">Refuser</span>
                         </MenuItem>
                       </div>
@@ -183,6 +191,9 @@
       }, 1000*60*10); // Refresh in 10 minutes
     },
 		methods: {
+      oldResa({arrival}) {
+        return compareAsc(new Date(),new Date(arrival)) > 0;
+      },
       allowcomment({arrival}) {
         return isSameDay(new Date(arrival),Date.now())
       },
@@ -208,13 +219,25 @@
         this.getReservationsAjax(day);
       },
       getReservationsAjax : debounce(async function(day) {
-        this.reservations = await userService.getReservations(format(day, 'Y'),format(day, 'M')).then(({data}) => {
+        await userService.getReservations(format(day, 'Y'),format(day, 'M')).then(({data}) => {
           this.loading = false;
-          return data
+          this.reservations = data['resas'];
         });
 
         this.currentProject = this.projects[0] ? this.projects[0].value : null;
-      },2000),
+      },500),
+      async noShowResa(id) {
+        await userService.updateReservation(id,{'no_show':true}).then(({data}) => {
+          if( data ){
+            this.reservations.forEach(resa => {
+              if( resa.id === id ) {
+                resa['no_show'] = true;
+                return
+              }
+            })
+          }
+        });
+      },
       async confirmResa(id) {
         await userService.updateReservation(id,{'resa-confirmation':this.isAdmin ?'confirmed':'confirmed-owner'}).then(({data}) => {
           if( data ){
@@ -293,6 +316,12 @@
       isAdmin() {
         return JSON.parse(localStorage.user).user_role === 'administrator' || JSON.parse(localStorage.user).user_role === 'bookagent'
       },
+      isPartner() {
+        return JSON.parse(localStorage.user).user_role === 'partner'
+      },
+      isTransporter() {
+        return JSON.parse(localStorage.user).user_role === 'transporter'
+      },
       dayResa() {
         const reservations = this.reservations.filter(({arrival}) => {
           return isSameDay(this.currentDay,new Date(arrival));
@@ -302,7 +331,7 @@
           return compareAsc(new Date(a.arrival),new Date(b.arrival));
         });
 
-        return {
+        let nav = {
           urgent : {
             label : 'Urgentes',
             resas : reservations.filter(resa => {
@@ -322,22 +351,25 @@
               return differenceInHours(new Date(resa.arrival),this.now) < 0 && ['confirmed','confirmed-owner'].includes(resa['resa-confirmation'])
             })
           },
-          */
-          refused : {
-            label : 'Refusées',
-            resas : reservations.filter(resa => {
-              return ['not-confirmed','not-confirmed-owner'].includes(resa['resa-confirmation'])
-            })
-          },
-          /*
           ignored : {
             label: 'Ignorées',
             resas : reservations.filter(resa => {
               return differenceInHours(new Date(resa.arrival),this.now) < 0 && ['waiting'].includes(resa['resa-confirmation'])
             })
-          },
+          }
           */
-        };
+        }
+
+        if( !this.isTransporter ){
+          nav['refused'] = {
+            label : 'Refusées',
+            resas : reservations.filter(resa => {
+              return ['not-confirmed','not-confirmed-owner'].includes(resa['resa-confirmation'])
+            })
+          }
+        }
+
+        return nav;
       },
       navigation() {
         return this.$store.state.other.navigation
