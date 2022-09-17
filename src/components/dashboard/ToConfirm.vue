@@ -20,6 +20,18 @@
     <Loader v-if="loading" />
     <div v-else>
       <EtabList v-model="currentProject" v-model:title="fullname" :list="projects" v-if="projects.length > 1" class="mt-5" :filterByName="true" />
+      <div v-if="!(currentProject || fullname)" class="mt-8 overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg mb-5">
+        <div class="flex items-center justify-between bg-white px-4 py-3 sm:px-6 w-full">
+          <VuePaginationTw
+            :key="currentReservations.length"
+            :total-items="currentReservations.length"
+            :current-page="currentPage"
+            :per-page="itemPerPage"
+            @page-changed="changePage"
+            class="w-full"
+          />
+        </div>
+      </div>
       <div class="mt-8 overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg mb-5">
         <table class="min-w-full divide-y divide-gray-300">
           <thead class="bg-gray-50">
@@ -35,7 +47,7 @@
             </tr>
           </thead>
           <tbody class="divide-y divide-gray-200 bg-white">
-            <tr v-for="resa in currentReservations.filter(({project,...resa}) => ( !currentProject || project === currentProject ) && ( !fullname || resa['full-name'].includes(fullname) ))" :key="resa.id">
+            <tr v-for="resa in currentReservationsFiltered" :key="resa.id">
               <td class="w-full max-w-0 py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:w-auto sm:max-w-none sm:pl-6">
                 #{{ resa.id }}
                 <br/>
@@ -61,6 +73,16 @@
             </tr>
           </tbody>
         </table>
+        <div class="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6 w-full" v-if="!(currentProject || fullname)">
+          <VuePaginationTw
+            :key="currentReservations.length"
+            :total-items="currentReservations.length"
+            :current-page="currentPage"
+            :per-page="itemPerPage"
+            @page-changed="changePage"
+            class="w-full"
+          />
+        </div>
       </div>
     </div>
   </div>
@@ -83,6 +105,8 @@
   import Loader from '../Loader.vue'
   import { debounce } from 'lodash'
   import compareAsc from 'date-fns/compareAsc'
+  import VuePaginationTw from "vue-pagination-tw";
+  import "vue-pagination-tw/styles"; // tailwind basic styles
 
   export default {
     name: 'resa',
@@ -91,7 +115,8 @@
       EtabList,
       ChevronLeftIcon,
       ChevronRightIcon,
-      Loader
+      Loader,
+      VuePaginationTw
     },
     props : {
       type : {}
@@ -106,7 +131,9 @@
         fullname : null,
         staff : [],
         currentDay: new Date(),
-				currentMonth: null
+				currentMonth: null,
+        currentPage: 1,
+        itemPerPage: 20
       }
     },
     async mounted() {
@@ -123,6 +150,17 @@
     watch: {
       type(val,oldval) {
         if( val !== oldval ) this.currentProject = this.projects[0]?.value
+        this.currentPage = 1;
+      },
+      currentProject(val) {
+        if( val !== 0 ) {
+          this.currentPage = 1;
+        }
+      },
+      fullname(val) {
+        if( val !== 0 ) {
+          this.currentPage = 1;
+        }
       }
     },
     computed: {
@@ -183,6 +221,15 @@
           }
         } 
       },
+      currentReservationsFiltered () {
+        if(this.currentProject || this.fullname)
+          return this.currentReservations.filter(({project,...resa}) => ( !this.currentProject || project === this.currentProject ) && ( !this.fullname || resa['full-name'].includes(this.fullname) ))
+        else{
+          const from = (this.currentPage - 1) * this.itemPerPage;
+          const to = this.currentPage * this.itemPerPage
+          return this.currentReservations.slice(from,to)
+        }
+      },
       content() {
         if( this.type === 'partner_calendar_urgent' ) {
           return ['Réservations Urgentes Aujourd\'hui','Liste des réservations éffectuée au même jour.']
@@ -228,6 +275,9 @@
       }
     },
     methods: {
+      changePage(target) {
+        this.currentPage = target;
+      },
       getReservations(day) {
         this.loading = true;
         this.getReservationsAjax(day);
@@ -301,11 +351,12 @@
       async confirmResa(id) {
         await userService.updateReservation(id,{'resa-confirmation':'confirmed-owner'}).then(({data}) => {
           if( data ){
+            this.$store.commit('setConfirmedResas', [...this.$store.state.other.confirmedResas,...[this.currentReservations.find(resa => {return resa.id === id})]])
+
             if ( this.type === 'partner_calendar_urgent' ) this.$store.dispatch('setUrgentResas', this.filteredResa(id))
             else if ( this.type === 'partner_calendar_confirm' ) this.$store.commit('setConfirmResas', this.filteredResa(id))
-            else if ( this.type === 'partner_calendar_confirmed' ) this.$store.commit('setConfirmedResas', this.filteredResa(id))
+            else if ( this.type === 'partner_calendar_refused' ) this.$store.commit('setRefusedResas', this.filteredResa(id))
 						
-            
             this.showModal = false;
             this.$store.dispatch('updateNavigation');
           }
@@ -314,10 +365,12 @@
       async denyResa(id) {
         await userService.updateReservation(id,{'resa-confirmation':'not-confirmed-owner'}).then(({data}) => {
           if( data ){
+            this.$store.commit('setRefusedResas', [...this.$store.state.other.refusedResas,...[this.currentReservations.find(resa => {return resa.id === id})]])
+
             if ( this.type === 'partner_calendar_urgent' ) this.$store.dispatch('setUrgentResas', this.filteredResa(id))
             else if ( this.type === 'partner_calendar_confirm' ) this.$store.commit('setConfirmResas', this.filteredResa(id))
             else if ( this.type === 'partner_calendar_confirmed' ) this.$store.commit('setConfirmedResas', this.filteredResa(id))
-						
+
             this.showModal = false;
             this.$store.dispatch('updateNavigation');
           }
