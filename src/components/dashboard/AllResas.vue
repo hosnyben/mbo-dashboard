@@ -25,10 +25,11 @@
           <thead class="bg-gray-50">
             <tr>
               <th scope="col" class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6">ID de réservation</th>
-              <th scope="col" class="hidden px-3 py-3.5 text-left text-sm font-semibold text-gray-900 lg:table-cell">Établissement</th>
+              <th scope="col" class="hidden px-3 py-3.5 text-left text-sm font-semibold text-gray-900 lg:table-cell w-102">Établissement</th>
               <th scope="col" class="hidden px-3 py-3.5 text-left text-sm font-semibold text-gray-900 lg:table-cell">Nom du client</th>
               <th scope="col" class="hidden px-3 py-3.5 text-left text-sm font-semibold text-gray-900 lg:table-cell">Nombre de personnes</th>
               <th scope="col" class="hidden px-3 py-3.5 text-left text-sm font-semibold text-gray-900 lg:table-cell">Arrivé</th>
+              <th scope="col" class="hidden px-3 py-3.5 text-left text-sm font-semibold text-gray-900 lg:table-cell">État</th>
               <th scope="col" class="relative py-3.5 pl-3 pr-4 sm:pr-6">
                 <span class="sr-only">Edit</span>
               </th>
@@ -51,10 +52,11 @@
                   <dd class="mt-1 truncate text-gray-500 text-xs"><span style="display: inline-block;" class="font-semibold">Arrivé : </span> {{ dateDisplay(resa.arrival) }}</dd>
                 </dl>
               </td>
-              <td class="hidden px-3 py-4 text-sm text-gray-500 lg:table-cell">{{ offers.find(({value}) => value === resa.project)?.label || resa.project_name }}</td>
+              <td class="hidden px-3 py-4 text-sm text-gray-500 lg:table-cell"><div class="w-52">{{ offers.find(({value}) => value === resa.project)?.label || resa.project_name }}</div></td>
               <td class="hidden px-3 py-4 text-sm text-gray-500 lg:table-cell cusrsor-pointer">{{ resa['full-name'] }}</td>
               <td class="hidden px-3 py-4 text-sm text-gray-500 lg:table-cell">{{ resa['nbr-adult'] }} Adultes - {{ resa['nbr-children'] || 0 }} Enfants</td>
               <td class="hidden px-3 py-4 text-sm text-gray-500 lg:table-cell">{{ dateDisplay(resa.arrival) }}</td>
+              <td class="hidden px-3 py-4 text-sm text-gray-500 lg:table-cell"><span class="inline-block flex-shrink-0 rounded-full px-2 py-0.5 text-xs font-medium" :class="confirmationLabel[resa['resa-confirmation']].class">{{confirmationLabel[resa['resa-confirmation']].text }}</span></td>
               <td class="py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
                 <span class="text-primary-600 hover:text-primary-900 cursor-pointer" @click="selectResa(resa)">Détails</span>
               </td>
@@ -87,6 +89,7 @@
   import { debounce } from 'lodash'
   import VuePaginationTw from "vue-pagination-tw";
   import "vue-pagination-tw/styles"; // tailwind basic styles
+  import {updateResaConfirmation} from '../../methods'
 
   export default {
     name: 'resa',
@@ -110,7 +113,29 @@
         staff : [],
         currentPage: 1,
         itemPerPage: 25,
-				pagesCount: 0
+				pagesCount: 0,
+        confirmationLabel : {
+          'waiting' : {
+            class : 'text-yellow-800 bg-yellow-100',
+            text : 'En attente de confirmation'
+          },
+          'confirmed' : {
+            class : 'text-green-800 bg-green-100',
+            text : 'Confirmée'
+          },
+          'not-confirmed' : {
+            class : 'text-gray-700 bg-gray-300',
+            text : 'Refusée'
+          },
+          'confirmed-owner' : {
+            class : 'text-green-800 bg-green-100',
+            text : 'Confirmée par le propriétaire'
+          },
+          'not-confirmed-owner' : {
+            class : 'text-gray-700 bg-gray-300',
+            text : 'Refusée par le propriétaire'
+          }
+        },
       }
     },
     async mounted() {
@@ -122,12 +147,12 @@
     },
     computed: {
       modalActions() {
-        let actions = [{label:'Fermer',method: () => { this.showModal = false } }];
+        let actions = [];
 
-				if( this.type === 'partner_calendar_urgent' || this.type === 'partner_calendar_confirm' || this.type === 'partner_calendar_refused' )
-					actions = [...actions,...[{label:'Confirmer',method: () => { this.confirmResa(this.selectedResa.id) } }]];
-				if( this.type === 'partner_calendar_urgent' || this.type === 'partner_calendar_confirm' || this.type === 'partner_calendar_confirmed' )
-					actions = [...actions,...[{label:'Refuser',method: () => { this.denyResa(this.selectedResa.id) } }]];
+				if( ['waiting','not-confirmed','not-confirmed-owner'].includes(this.selectedResa['resa-confirmation']) )
+					actions = [...actions,...[{label:'Confirmer',method: () => { this.confirmResa(this.selectedResa) } }]];
+				if( ['waiting','confirmed','confirmed-owner'].includes(this.selectedResa['resa-confirmation']) )
+					actions = [...actions,...[{label:'Refuser',method: () => { this.denyResa(this.selectedResa) } }]];
         
         return actions;
       },
@@ -166,33 +191,13 @@
         from = new Date(from);
         return format(from,'dd-MM-yyyy à HH:mm')
       },
-      async confirmResa(id) {
-        await userService.updateReservation(id,{'resa-confirmation':'confirmed-owner'}).then(({data}) => {
-          if( data ){
-            this.$store.commit('setConfirmedResas', [...this.$store.state.other.confirmedResas,...[this.reservations.find(resa => {return resa.id === id})]])
-
-            if ( this.type === 'partner_calendar_urgent' ) this.$store.dispatch('setUrgentResas', this.filteredResa(id))
-            else if ( this.type === 'partner_calendar_confirm' ) this.$store.commit('setConfirmResas', this.filteredResa(id))
-            else if ( this.type === 'partner_calendar_refused' ) this.$store.commit('setRefusedResas', this.filteredResa(id))
-						
-            this.showModal = false;
-            this.$store.dispatch('updateNavigation');
-          }
-        });
+      async confirmResa(resa) {
+        this.showModal = false;
+        this.reservations = await updateResaConfirmation(resa,this.reservations,'confirmed');
       },
-      async denyResa(id) {
-        await userService.updateReservation(id,{'resa-confirmation':'not-confirmed-owner'}).then(({data}) => {
-          if( data ){
-            this.$store.commit('setRefusedResas', [...this.$store.state.other.refusedResas,...[this.reservations.find(resa => {return resa.id === id})]])
-
-            if ( this.type === 'partner_calendar_urgent' ) this.$store.dispatch('setUrgentResas', this.filteredResa(id))
-            else if ( this.type === 'partner_calendar_confirm' ) this.$store.commit('setConfirmResas', this.filteredResa(id))
-            else if ( this.type === 'partner_calendar_confirmed' ) this.$store.commit('setConfirmedResas', this.filteredResa(id))
-
-            this.showModal = false;
-            this.$store.dispatch('updateNavigation');
-          }
-        });
+      async denyResa(resa) {
+        this.showModal = false;
+        this.reservations = await updateResaConfirmation(resa,this.reservations,'not-confirmed');
       },
     }
   };

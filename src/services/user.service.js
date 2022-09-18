@@ -5,37 +5,37 @@ import authHeader from './auth-header';
 const API_URL = 'https://www.marrakechbestof.com/wp-json/mbo/v1/';
 class UserService {
   getReservations(year = null,month = null, page = null) {
-    return axios.get(API_URL + `get_resas${year?'/'+year:''}${month?'/'+month:''}${page?'?page='+page:''}`, { headers: authHeader() }).catch(({response}) => {
+    return axios.get(API_URL + `get_resas${year?'/'+year:''}${month?'/'+month:''}?v=${Math.random()}${page?'&page='+page:''}`, { headers: authHeader() }).catch(({response}) => {
       if (response.status === 403) this.forceLogout();
     })
   }
   updateReservation(id,data) {
-    return axios.post(API_URL + `update_resa/${id}`,data, { headers: authHeader() }).catch(({response}) => {
+    return axios.post(API_URL + `update_resa/${id}?v=${Math.random()}`,data, { headers: authHeader() }).catch(({response}) => {
       if (response.status === 403) this.forceLogout();
     })
   }
   getOffers() {
-    return axios.get(API_URL + `get_offers`, { headers: authHeader() }).catch(({response}) => {
+    return axios.get(API_URL + `get_offers?v=${Math.random()}`, { headers: authHeader() }).catch(({response}) => {
       if (response.status === 403) this.forceLogout();
     })
   }
   getOccupations() {
-    return axios.get(API_URL + `get_occupations`, { headers: authHeader() }).catch(({response}) => {
+    return axios.get(API_URL + `get_occupations?v=${Math.random()}`, { headers: authHeader() }).catch(({response}) => {
       if (response.status === 403) this.forceLogout();
     })
   }
   updateOccupation(etabId,data) {
-    return axios.post(API_URL + `update_occupation/${etabId}`,data, { headers: authHeader() }).catch(({response}) => {
+    return axios.post(API_URL + `update_occupation/${etabId}?v=${Math.random()}`,data, { headers: authHeader() }).catch(({response}) => {
       if (response.status === 403) this.forceLogout();
     })
   }
   getTransporters() {
-    return axios.get(API_URL + `get_transporters`, { headers: authHeader() }).catch(({response}) => {
+    return axios.get(API_URL + `get_transporters?v=${Math.random()}`, { headers: authHeader() }).catch(({response}) => {
       if (response.status === 403) this.forceLogout();
     })
   }
   getAdmins() {
-    return axios.get(API_URL + `get_admins`, { headers: authHeader() }).catch(({response}) => {
+    return axios.get(API_URL + `get_admins?v=${Math.random()}`, { headers: authHeader() }).catch(({response}) => {
       if (response.status === 403) this.forceLogout();
     })
   }

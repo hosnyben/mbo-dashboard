@@ -107,6 +107,7 @@
   import compareAsc from 'date-fns/compareAsc'
   import VuePaginationTw from "vue-pagination-tw";
   import "vue-pagination-tw/styles"; // tailwind basic styles
+  import {updateResaConfirmation} from '../../methods'
 
   export default {
     name: 'resa',
@@ -180,10 +181,10 @@
       modalActions() {
         let actions = [];
 
-        if( this.type === 'partner_calendar_urgent' || this.type === 'partner_calendar_confirm' || this.type === 'partner_calendar_refused' )
-          actions = [...actions,...[{label:'Confirmer',method: () => { this.confirmResa(this.selectedResa.id) } }]];
-        if( this.type === 'partner_calendar_urgent' || this.type === 'partner_calendar_confirm' || this.type === 'partner_calendar_confirmed' )
-          actions = [...actions,...[{label:'Refuser',method: () => { this.denyResa(this.selectedResa.id) } }]];
+				if( ['waiting','not-confirmed','not-confirmed-owner'].includes(this.selectedResa['resa-confirmation']) )
+					actions = [...actions,...[{label:'Confirmer',method: () => { this.confirmResa(this.selectedResa) } }]];
+				if( ['waiting','confirmed','confirmed-owner'].includes(this.selectedResa['resa-confirmation']) )
+					actions = [...actions,...[{label:'Refuser',method: () => { this.denyResa(this.selectedResa) } }]];
         
         return actions;
       },
@@ -335,33 +336,13 @@
         else
           return format(from,'dd-MM-yyyy à HH:mm')
       },
-      async confirmResa(id) {
-        await userService.updateReservation(id,{'resa-confirmation':'confirmed-owner'}).then(({data}) => {
-          if( data ){
-            this.$store.commit('setConfirmedResas', [...this.$store.state.other.confirmedResas,...[this.currentReservations.find(resa => {return resa.id === id})]])
-
-            if ( this.type === 'partner_calendar_urgent' ) this.$store.dispatch('setUrgentResas', this.filteredResa(id))
-            else if ( this.type === 'partner_calendar_confirm' ) this.$store.commit('setConfirmResas', this.filteredResa(id))
-            else if ( this.type === 'partner_calendar_refused' ) this.$store.commit('setRefusedResas', this.filteredResa(id))
-						
-            this.showModal = false;
-            this.$store.dispatch('updateNavigation');
-          }
-        });
+      async confirmResa(resa) {
+        await updateResaConfirmation(resa,this.currentReservations,'confirmed');
+        this.showModal = false;
       },
-      async denyResa(id) {
-        await userService.updateReservation(id,{'resa-confirmation':'not-confirmed-owner'}).then(({data}) => {
-          if( data ){
-            this.$store.commit('setRefusedResas', [...this.$store.state.other.refusedResas,...[this.currentReservations.find(resa => {return resa.id === id})]])
-
-            if ( this.type === 'partner_calendar_urgent' ) this.$store.dispatch('setUrgentResas', this.filteredResa(id))
-            else if ( this.type === 'partner_calendar_confirm' ) this.$store.commit('setConfirmResas', this.filteredResa(id))
-            else if ( this.type === 'partner_calendar_confirmed' ) this.$store.commit('setConfirmedResas', this.filteredResa(id))
-
-            this.showModal = false;
-            this.$store.dispatch('updateNavigation');
-          }
-        });
+      async denyResa(resa) {
+        await updateResaConfirmation(resa,this.currentReservations,'not-confirmed');
+        this.showModal = false;
       },
     }
   };

@@ -109,7 +109,7 @@
                         <span v-else>{{ dateDisplay(data.departure) }}</span>
                       </dd>
                     </div>
-                    <div v-if="isAdmin" class="px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                    <div v-if="isAdmin || (isTransporter && data['tr-transport'])" class="px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
                       <dt class="text-sm font-medium text-gray-500">Transport</dt>
                       <dd class="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">
                         <div v-if="editMode" class="md:space-x-10 md:flex space-y-5 md:space-y-0">
@@ -134,7 +134,7 @@
                         </span>
                       </dd>
                     </div>
-                    <div class="px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6" v-if="isAdmin &&  data['tr-transport']">
+                    <div class="px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6" v-if="isAdmin && data['tr-transport']">
                       <dt class="text-sm font-medium text-gray-500">Attribuer à un transporteur</dt>
                       <dd class="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">
                         <select v-model="data['tr-agent']" class="w-56 mt-1 block w-full rounded-md border-gray-300 py-2 pl-3 pr-10 text-base focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm" @change="() => {edited = true}">
@@ -197,11 +197,11 @@
                 <div class="sm:flex sm:justify-center space-x-2" v-if="isAdmin">
                   <button type="button" class="my-1 disabled:bg-gray-100 disabled:cursor-not-allowed inline-flex justify-center rounded-md border border-transparent bg-primary-600 px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 sm:col-start-2 sm:text-sm" @click="wsp(true)"><img class="h-5 mr-2 w-auto" src="@/assets/wsp.svg" alt="Workflow" /> Confirmer</button>
                   <button type="button" class="my-1 disabled:bg-gray-100 disabled:cursor-not-allowed inline-flex justify-center rounded-md border border-transparent bg-primary-600 px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 sm:col-start-2 sm:text-sm" @click="wsp(false)"><img class="h-5 mr-2 w-auto" src="@/assets/wsp.svg" alt="Workflow" /> Refuser</button>
-                  <button type="button" class="my-1 disabled:bg-gray-100 disabled:cursor-not-allowed inline-flex justify-center rounded-md border border-transparent bg-primary-600 px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 sm:col-start-2 sm:text-sm" @click="wspPartner(this.offers.find(({value}) => value === this.data.project)?.phone)"><img class="h-5 mr-2 w-auto" src="@/assets/wsp.svg" alt="Workflow" /> Partenair</button>
+                  <button type="button" class="my-1 disabled:bg-gray-100 disabled:cursor-not-allowed inline-flex justify-center rounded-md border border-transparent bg-primary-600 px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 sm:col-start-2 sm:text-sm" @click="wspPartner()"><img class="h-5 mr-2 w-auto" src="@/assets/wsp.svg" alt="Workflow" /> {{ copied ? 'Copié' : 'Partenair' }}</button>
                 </div>
                 <div class="sm:flex sm:justify-center space-x-2">
                   <button :disabled="loading" v-if="edited" type="button" class="my-1 disabled:bg-gray-100 disabled:cursor-not-allowed inline-flex justify-center rounded-md border border-transparent bg-primary-600 px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 sm:col-start-2 sm:text-sm" @click="updateResaData(() => {})">Modifier</button>
-                  <button :disabled="loading" v-for="action in actions" type="button" class="my-1 disabled:bg-gray-100 disabled:cursor-not-allowed inline-flex justify-center rounded-md border border-transparent bg-primary-600 px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 sm:col-start-2 sm:text-sm" @click="triggerMethod(action.method)">{{(edited) ? 'Modifier et ':''}}{{ action.label }}</button>
+                  <button :disabled="loading" v-for="action in actions" type="button" class="my-1 disabled:bg-gray-100 disabled:cursor-not-allowed inline-flex justify-center rounded-md border border-transparent bg-primary-600 px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 sm:col-start-2 sm:text-sm" @click="triggerMethod(action.method)">{{ action.label }}</button>
                 </div>
               </div>
             </DialogPanel>
@@ -249,14 +249,15 @@
 				type: Boolean,
 				default: false
 			},
-      resaType : {}
+      resaType : null
 		},
     data() {
       return {
         loading : false,
         editMode : false,
         edited : false,
-        transporters : []
+        transporters : [],
+        copied: false
       }
     },
     async mounted() {
@@ -284,7 +285,7 @@
         if( val !== old && !this.edited )
           this.edited = true;
       },
-      show(val,old) {
+      show() {
         this.edited = false;
         this.editMode = false;
       }
@@ -303,12 +304,12 @@
         
         window.open(`https://wa.me/${this.data['country-phone'].replace('+','')}${this.data.phone}?text=${text}`,'_blank');
       },
-      wspPartner(phone) {
-        const br = '%0a';
+      wspPartner() {
+        const br = '\n';
 
         let text = `Bonjour, Vous avez une nouvelle réservation : ${br}Nom : ${this.data['full-name']}${br}Nombre de personnes: ${this.data['nbr-adult']} Adulte(s) et ${this.data['nbr-children'] || 0} Enfant(s)${br}Arrivée : ${this.formatDay(new Date(this.data.arrival))}${br}${this.data.arrival !== this.data.departure ? `Départ : ${this.formatDay(new Date(this.data.departure))}${br}`:''}`;
 
-        if( this.data.fields.length ){
+        if( this.data.fields && this.data.fields.length ){
           text += `------`
           this.data.fields.forEach(({placeholder,value}) => {
             text += `${br}"${placeholder}" : ${value}`
@@ -319,7 +320,21 @@
         if( this.data['comments'] )
           text += `Commentaire du client : ${this.data['comments']}${br}`;
 
-        window.open(`https://wa.me/${phone}?text=${text}`,'_blank');
+          this.copyToClipboard(text);
+      },
+      copyToClipboard(str) {
+        const el = document.createElement('textarea');
+        el.value = str;
+        document.body.appendChild(el);
+        el.select();
+        document.execCommand('copy');
+        document.body.removeChild(el);
+
+        this.copied = true;
+
+        setTimeout(() => {
+          this.copied = false;
+        }, 1500);
       },
       triggerMethod(method = () => {}){
         if( this.edited )

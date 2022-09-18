@@ -250,6 +250,8 @@
             
             this.$store.dispatch('setUrgentResas', this.$store.state.other.urgentResas.filter(resa => id !== resa.id));
             this.$store.commit('setConfirmResas', this.$store.state.other.confirmResas.filter(resa => id !== resa.id));
+            this.$store.commit('setRefusedResas', this.$store.state.other.refusedResas.filter(resa => id !== resa.id));
+            
             this.$store.commit('setConfirmedResas', [...this.$store.state.other.confirmedResas,...this.reservations.filter((resa) => resa.id === id)].sort((a, b) => {
               return compareAsc(new Date(a.arrival),new Date(b.arrival))
             }));
@@ -270,13 +272,17 @@
             
             this.$store.dispatch('setUrgentResas', this.$store.state.other.urgentResas.filter(resa => id !== resa.id));
             this.$store.commit('setConfirmResas', this.$store.state.other.confirmResas.filter(resa => id !== resa.id));
+            this.$store.commit('setConfirmedResas', this.$store.state.other.confirmedResas.filter(resa => id !== resa.id));
+            
+            this.$store.commit('setRefusedResas', [...this.$store.state.other.refusedResas,...this.reservations.filter((resa) => resa.id === id)].sort((a, b) => {
+              return compareAsc(new Date(a.arrival),new Date(b.arrival))
+            }));
 
             this.$store.dispatch('updateNavigation');
           }
         });
       },
       selectResa(resa) {
-        console.log(resa);
         this.selectedResa = resa;
         this.showModal = true;
       },
