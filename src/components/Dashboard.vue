@@ -36,7 +36,7 @@
                     </div>
                     <div class="ml-3">
                       <p class="text-base font-medium text-white">{{ user.user_display_name }}</p>
-                      <p class="text-sm font-medium text-gray-400 group-hover:text-gray-300" @click="logOut">Deconnection</p>
+                      <p class="text-sm font-medium text-gray-400 group-hover:text-gray-300" @click="logOut">Déconnexion</p>
                     </div>
                   </div>
                 </a>
@@ -74,7 +74,7 @@
               </div>
               <div class="ml-3">
                 <p class="text-sm font-medium text-white">{{ user.user_display_name }}</p>
-                <p class="text-xs font-medium text-gray-300 group-hover:text-gray-200"><span @click="logOut" class="cursor-pointer">Déconnection</span></p>
+                <p class="text-xs font-medium text-gray-300 group-hover:text-gray-200"><span @click="logOut" class="cursor-pointer">Déconnexion</span></p>
               </div>
             </div>
           </div>

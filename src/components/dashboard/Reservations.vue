@@ -166,6 +166,10 @@
             class : 'text-gray-700 bg-gray-300',
             text : 'Refusée'
           },
+          'canceled' : {
+            class : 'text-gray-700 bg-gray-300',
+            text : 'Annulée'
+          },
           'confirmed-owner' : {
             class : 'text-green-800 bg-green-100',
             text : 'Confirmée par le propriétaire'
@@ -347,7 +351,7 @@
           active : {
             label : 'Résas du jour',
             resas : reservations.filter(resa => {
-              return !['not-confirmed','not-confirmed-owner'].includes(resa['resa-confirmation']) && !resa.urgent
+              return !['not-confirmed','not-confirmed-owner','canceled'].includes(resa['resa-confirmation']) && !resa.urgent
             })
           },
           /*
