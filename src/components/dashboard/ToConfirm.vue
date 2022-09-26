@@ -64,7 +64,7 @@
                 </dl>
               </td>
               <td class="hidden px-3 py-4 text-sm text-gray-500 lg:table-cell">{{ offers.find(({value}) => value === resa.project)?.label || resa.project_name }}</td>
-              <td class="hidden px-3 py-4 text-sm text-gray-500 lg:table-cell cusrsor-pointer">{{ resa['full-name'] }}</td>
+              <td class="hidden px-3 py-4 text-sm text-gray-500 lg:table-cell cusrsor-pointer">{{ resa['full-name'] }}<br/>{{ resa['country-phone']+resa['phone'] }}</td>
               <td class="hidden px-3 py-4 text-sm text-gray-500 lg:table-cell">{{ resa['nbr-adult'] }} Adultes - {{ resa['nbr-children'] || 0 }} Enfants</td>
               <td class="hidden px-3 py-4 text-sm text-gray-500 lg:table-cell">{{ dateDisplay(resa.arrival) }}</td>
               <td class="py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
@@ -272,7 +272,7 @@
         this.getReservationsAjax(day);
       },
       getReservationsAjax : debounce(async function (day) {
-        await userService.getReservations(format(day, 'Y'),format(day, 'M')).then(({data}) => {
+        await userService.getReservations(format(day, 'Y'),format(day, 'M'),{posts_per_page:-1}).then(({data}) => {
           this.loading = false;
 
           this.reservations = data['resas'].sort((a, b) => {

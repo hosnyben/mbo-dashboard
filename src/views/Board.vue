@@ -75,7 +75,7 @@ import AllResasVue from '../components/dashboard/AllResas.vue'
     },
     methods: {
       async getReservations(day) {
-        const resas = await userService.getReservations(format(day, 'Y'),format(day, 'M')).then(({data}) => {
+        const resas = await userService.getReservations(format(day, 'Y'),format(day, 'M'),{posts_per_page:-1}).then(({data}) => {
           return data['resas'].map(resa => {
             return {...resa,...{urgent:isSameDay(new Date(resa.created_at),new Date(resa.arrival))}};
           }).filter(resa => {

@@ -86,8 +86,11 @@
                   <transition enter-active-class="transition ease-out duration-100" enter-from-class="transform opacity-0 scale-95" enter-to-class="transform opacity-100 scale-100" leave-active-class="transition ease-in duration-75" leave-from-class="transform opacity-100 scale-100" leave-to-class="transform opacity-0 scale-95">
                     <MenuItems class="absolute right-0 z-10 mt-2 w-36 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
                       <div class="py-1">
-                        <MenuItem v-slot="{ active }" v-if="isPartner && oldResa(reservation) && ['urgent','active'].includes(currentResaType) && ['confirmed','confirmed-owner'].includes(reservation['resa-confirmation'])">
-                          <span @click="noShowResa(reservation.id)" :class="[active ? 'bg-gray-100 text-gray-900' : 'text-gray-700', 'block px-4 py-2 text-sm cursor-pointer']">No Show</span>
+                        <MenuItem v-slot="{ active }" v-if="isPartner && isOldResa(reservation) && reservation.today && !reservation.noshow && ['confirmed','confirmed-owner'].includes(reservation['resa-confirmation'])">
+                          <span @click="noShowResa(reservation.id,true)" :class="[active ? 'bg-gray-100 text-gray-900' : 'text-gray-700', 'block px-4 py-2 text-sm cursor-pointer']">No Show</span>
+                        </MenuItem>
+                        <MenuItem v-slot="{ active }" v-if="isPartner && reservation.noshow">
+                          <span @click="noShowResa(reservation.id,false)" :class="[active ? 'bg-gray-100 text-gray-900' : 'text-gray-700', 'block px-4 py-2 text-sm cursor-pointer']">Show</span>
                         </MenuItem>
                         <MenuItem v-slot="{ active }">
                           <span @click="selectResa(reservation)" :class="[active ? 'bg-gray-100 text-gray-900' : 'text-gray-700', 'block px-4 py-2 text-sm cursor-pointer']">Détails</span>
@@ -138,8 +141,9 @@
   import Modal from '../Modal.vue'
   import EtabList from '../EtabList.vue'
   import Loader from '../Loader.vue'
-
+  import differenceInDays from 'date-fns/differenceInDays'
   import { debounce } from 'lodash';
+
   export default {
     name: 'Reservations',
     components: {
@@ -195,8 +199,9 @@
       }, 1000*60*10); // Refresh in 10 minutes
     },
 		methods: {
-      oldResa({arrival}) {
-        return compareAsc(new Date(),new Date(arrival)) > 0;
+      isOldResa({arrival}) {
+        const diffDays = differenceInDays(new Date(),new Date(arrival));
+        return compareAsc(new Date(),new Date(arrival)) > 0 && diffDays >= 0 && diffDays <= 2;
       },
       allowcomment({arrival}) {
         return isSameDay(new Date(arrival),Date.now())
@@ -223,19 +228,19 @@
         this.getReservationsAjax(day);
       },
       getReservationsAjax : debounce(async function(day) {
-        await userService.getReservations(format(day, 'Y'),format(day, 'M')).then(({data}) => {
+        await userService.getReservations(format(day, 'Y'),format(day, 'M'),{posts_per_page:-1}).then(({data}) => {
           this.loading = false;
           this.reservations = data['resas'];
         });
 
         this.currentProject = this.projects[0] ? this.projects[0].value : null;
       },500),
-      async noShowResa(id) {
-        await userService.updateReservation(id,{'no_show':true}).then(({data}) => {
+      async noShowResa(id,show) {
+        await userService.updateReservation(id,{'no_show':show}).then(({data}) => {
           if( data ){
             this.reservations.forEach(resa => {
               if( resa.id === id ) {
-                resa['no_show'] = true;
+                resa['no_show'] = show;
                 return
               }
             })
@@ -336,7 +341,14 @@
         const reservations = this.reservations.filter(({arrival}) => {
           return isSameDay(this.currentDay,new Date(arrival));
         }).map(resa => {
-          return {...resa,...{urgent:isSameDay(new Date(resa.created_at),new Date(resa.arrival)) && resa['resa-confirmation'] === 'waiting' }};
+          return {
+            ...resa,
+            ...{
+              urgent: isSameDay(new Date(resa.created_at),new Date(resa.arrival)) && resa['resa-confirmation'] === 'waiting',
+              noshow: resa['no_show'],
+              today: ['confirmed','confirmed-owner','waiting'].includes(resa['resa-confirmation'])
+            }
+          };
         }).sort((a, b) => {
           return compareAsc(new Date(a.arrival),new Date(b.arrival));
         });
@@ -351,9 +363,9 @@
           active : {
             label : 'Résas du jour',
             resas : reservations.filter(resa => {
-              return !['not-confirmed','not-confirmed-owner','canceled'].includes(resa['resa-confirmation']) && !resa.urgent
+              return resa.today && !resa.urgent && !resa.noshow
             })
-          },
+          }
           /*
           done : {
             label : 'Reçues',
@@ -371,6 +383,12 @@
         }
 
         if( !this.isTransporter ){
+          nav['noshow'] = {
+            label : 'No Show',
+            resas : reservations.filter(resa => {
+              return resa.noshow
+            })
+          }
           nav['refused'] = {
             label : 'Refusées',
             resas : reservations.filter(resa => {

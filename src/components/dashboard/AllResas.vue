@@ -20,6 +20,7 @@
 		</div>
     <Loader v-if="loading" />
     <div v-else>
+      <EtabList v-model="currentProject" v-model:title="fullname" :list="projects" class="mt-5" :filterByName="true" />
       <div class="mt-8 overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg mb-5">
         <table class="min-w-full divide-y divide-gray-300">
           <thead class="bg-gray-50">
@@ -53,7 +54,7 @@
                 </dl>
               </td>
               <td class="hidden px-3 py-4 text-sm text-gray-500 lg:table-cell"><div class="w-52">{{ offers.find(({value}) => value === resa.project)?.label || resa.project_name }}</div></td>
-              <td class="hidden px-3 py-4 text-sm text-gray-500 lg:table-cell cusrsor-pointer">{{ resa['full-name'] }}</td>
+              <td class="hidden px-3 py-4 text-sm text-gray-500 lg:table-cell cusrsor-pointer">{{ resa['full-name'] }}<br/>{{ resa['country-phone']+resa['phone'] }}</td>
               <td class="hidden px-3 py-4 text-sm text-gray-500 lg:table-cell">{{ resa['nbr-adult'] }} Adultes - {{ resa['nbr-children'] || 0 }} Enfants</td>
               <td class="hidden px-3 py-4 text-sm text-gray-500 lg:table-cell">{{ dateDisplay(resa.arrival) }}</td>
               <td class="hidden px-3 py-4 text-sm text-gray-500 lg:table-cell"><span class="inline-block flex-shrink-0 rounded-full px-2 py-0.5 text-xs font-medium" :class="confirmationLabel[resa['resa-confirmation']].class">{{confirmationLabel[resa['resa-confirmation']].text }}</span></td>
@@ -140,6 +141,8 @@
             text : 'Refusée par le propriétaire'
           }
         },
+        fullname: '',
+        currentProject: ''
       }
     },
     async mounted() {
@@ -150,6 +153,9 @@
 			this.getReservations();
     },
     computed: {
+      projects() {
+        return this.$store.state.other.offers
+      },
       modalActions() {
         let actions = [];
 
@@ -161,7 +167,7 @@
         return actions;
       },
       offers() {
-        return this.$store.state.other.offers
+        return this.$store.state.other.offers;
       }
     },
     methods: {
@@ -177,13 +183,19 @@
         this.getReservationsAjax();
       },
       getReservationsAjax : debounce(async function () {
-        await userService.getReservations(null,null,this.currentPage).then(({data}) => {
+        this.loading = true;
+        const datas = {paged : this.currentPage};
+
+        if( this.fullname ) datas.s = this.fullname;
+        if( this.currentProject ) datas.project = this.currentProject;
+
+        await userService.getReservations(null,null,datas).then(({data}) => {
           this.loading = false;
 
           this.reservations = data['resas'];
 					this.pagesCount = data['posts_count'];
         });
-      },500),
+      },1000),
       currentAgent(resa) {
         return this.staff.find(({id}) => id == resa.post_author )?.name
       },
@@ -203,6 +215,18 @@
         this.showModal = false;
         this.reservations = await updateResaConfirmation(resa,this.reservations,'not-confirmed');
       },
+    },
+    watch: {
+      fullname(val,old) {
+        if( old !== val ) {
+          this.getReservationsAjax();
+        }
+      },
+      currentProject(val,old) {
+        if( old !== val ) {
+          this.getReservationsAjax();
+        }
+      }
     }
   };
 </script>

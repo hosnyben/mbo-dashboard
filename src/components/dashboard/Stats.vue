@@ -214,7 +214,7 @@
         this.getReservationsAjax(day);
       },
       getReservationsAjax : debounce(async function (day) {
-        await userService.getReservations(format(day, 'Y'),format(day, 'M')).then(({data}) => {
+        await userService.getReservations(format(day, 'Y'),format(day, 'M'),{posts_per_page:-1}).then(({data}) => {
           this.loading = false;
           this.reservations = data['resas'].filter(resa => {
             return ['confirmed','confirmed-owner'].includes(resa['resa-confirmation']);

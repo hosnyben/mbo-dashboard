@@ -108,7 +108,7 @@
 			cleanList() {
 				let names = [];
 
-				return this.list.filter(({label}) => {
+				return [...[{label:'Choisir',value:''}],...this.list.filter(({label}) => {
 					if( !names.includes(label) ){
 						names.push(label)
 						return true;
@@ -121,7 +121,7 @@
 					if( b.value === 0 ) return 1;
 
 					return (textA < textB) ? -1 : (textA > textB) ? 1 : 0;
-				});
+				})];
 			}
 		}
 	};
