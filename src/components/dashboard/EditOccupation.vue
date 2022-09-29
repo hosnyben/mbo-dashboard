@@ -10,8 +10,8 @@
 						<label class="block text-sm font-medium text-gray-700 mb-1">Période d'occupation</label>
 
             <div class="flex items-center space-x-2">
-							<Datepicker locale="fr" selectText="Choisir" cancelText="Annuler" :format="formatDay" :minDate="today" v-model="from"></Datepicker>
-              <Datepicker locale="fr" selectText="Choisir" cancelText="Annuler" :format="formatDay" :minDate="today" v-model="to"></Datepicker>
+							<Datepicker locale="fr" selectText="Choisir" cancelText="Annuler" :format="formatDay" :minDate="minDate" :maxDate="maxDate" v-model="from"></Datepicker>
+              <Datepicker locale="fr" selectText="Choisir" cancelText="Annuler" :format="formatDay" :minDate="minDate" :maxDate="maxDate" v-model="to"></Datepicker>
 						</div>
 					</div>
 
@@ -57,20 +57,30 @@
       occupationKey() {
         return this.editing ? parseInt(this.$route.params.id.split('-')[1]) : null;
       },
-      currentOccupations() {
-        return this.occupations.find(({id}) => {
-          return id === parseInt(this.$route.params.id.split('-')[0])
-        })['occupations']
-      },
       offers() {
         return this.$store.state.other.offers
+      },
+      minDate() {
+        return this.from || this.today
+      },
+      maxDate() {
+        return this.to || null
       }
 		},
     mounted() {
+      if( this.editing ){
+        this.selectedOffer = parseInt(this.$route.params.id.split('-')[0])|| null;
+      }
+      this.getOccupations();
     },
     methods: {
       formatDay(date) {
 				return format(date, 'd-MM-Y HH:mm')
+      },
+      async getOccupations() {
+        this.occupations = await userService.getOccupations().then(({data}) => {
+          return data;
+        });
       },
       async setOccupation(stay = false) {
         const data = {
@@ -82,7 +92,7 @@
 
         if( this.occupations.length ){
           this.occupations.forEach(item => {
-            if( item.id === this.selectedOffer.id ){
+            if( item.id === this.selectedOffer ){
               if( this.occupationKey != null && item['occupations'][this.occupationKey] )
                 item['occupations'][this.occupationKey] = data;
               else

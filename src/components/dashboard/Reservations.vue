@@ -37,8 +37,8 @@
         <div class="sm:hidden">
           <label for="tabs" class="sr-only">Type de réservation</label>
           <!-- Use an "onChange" listener to redirect the user to the selected tab URL. -->
-          <select id="tabs" name="tabs" class="block w-full rounded-md border-gray-300 focus:border-primary-500 focus:ring-primary-500">
-            <option v-for="(resas,index) in dayResa" :key="index" :selected="index">{{ resas.label }}</option>
+          <select v-model="currentResaType" class="block w-full rounded-md border-gray-300 focus:border-primary-500 focus:ring-primary-500">
+            <option v-for="(resas,index) in dayResa" :key="index" :value="index">{{ resas.label }}</option>
           </select>
         </div>
         <div class="hidden sm:block">
