@@ -11,6 +11,7 @@ export const updateResaConfirmation = async function(reservation,list,statut) {
             list.forEach((resa) => {
                 if( reservation.id === resa.id ){
                     resa['resa-confirmation'] = isAdmin?statut:statut+'-owner';
+                    if( isAdmin ) resa.post_author = JSON.parse(localStorage.user).user_id;
                     storeHandle(resa,statut);
                     return;
                 }

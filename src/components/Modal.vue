@@ -289,9 +289,16 @@
         if( val !== old && !this.edited )
           this.edited = true;
       },
-      show() {
+      async show(val) {
         this.edited = false;
         this.editMode = false;
+
+        if( val ){
+          if( this.isAdmin ) {
+            this.data.post_author = JSON.parse(localStorage.user).user_id;
+            await this.updateResaData(() => {},false);
+          }
+        }
       }
     },
 		methods: {
@@ -387,7 +394,7 @@
         time = new Date(time);
         return subMinutes(time, minutes)
       },
-      async updateResaData(method = () => {}) {
+      async updateResaData(method = () => {},closeit = true) {
         this.loading = true;
         await userService.updateReservation(this.data.id,this.data).then(({data}) => {
           if( data ){
@@ -443,7 +450,8 @@
             }
             
             method();
-            this.closeModal();
+
+            if( closeit ) this.closeModal();
           }
         });
       },

@@ -70,7 +70,7 @@ import AllResasVue from '../components/dashboard/AllResas.vue'
         setInterval(() => {
           this.now = Date.now();
           this.getReservations(today);
-        }, 1000*60*5); // Refresh in 10 minutes
+        }, 1000*60*2); // Refresh in 2 minutes
       }
     },
     methods: {

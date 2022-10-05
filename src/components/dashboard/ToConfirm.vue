@@ -64,7 +64,7 @@
                 </dl>
               </td>
               <td class="hidden px-3 py-4 text-sm text-gray-500 lg:table-cell">{{ offers.find(({value}) => value === resa.project)?.label || resa.project_name }}</td>
-              <td class="hidden px-3 py-4 text-sm text-gray-500 lg:table-cell cusrsor-pointer">{{ resa['full-name'] }}<br/>{{ resa['country-phone']+resa['phone'] }}</td>
+              <td class="hidden px-3 py-4 text-sm text-gray-500 lg:table-cell cusrsor-pointer">{{ resa['full-name'] }}<br/>{{ resa['country-phone']+resa['phone'] }}<br/><span v-if="resa['tr-transport']" class="inline-block flex-shrink-0 rounded-full px-2 py-0.5 text-xs font-medium bg-primary-100 text-white">Avec Transport</span></td>
               <td class="hidden px-3 py-4 text-sm text-gray-500 lg:table-cell">{{ resa['nbr-adult'] }} Adultes - {{ resa['nbr-children'] || 0 }} Enfants</td>
               <td class="hidden px-3 py-4 text-sm text-gray-500 lg:table-cell">{{ dateDisplay(resa.arrival) }}</td>
               <td class="py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
@@ -320,7 +320,7 @@
         return subMinutes(time, minutes)
       },
       currentAgent(resa) {
-        return this.staff.find(({id}) => id == resa.post_author )?.name
+        return this.staff.find(({id}) => id == resa.post_author && resa.post_author !== 1 )?.name || null
       },
       selectResa(resa) {
         this.selectedResa = resa;

@@ -54,7 +54,7 @@
                 </dl>
               </td>
               <td class="hidden px-3 py-4 text-sm text-gray-500 lg:table-cell"><div class="w-52">{{ offers.find(({value}) => value === resa.project)?.label || resa.project_name }}</div></td>
-              <td class="hidden px-3 py-4 text-sm text-gray-500 lg:table-cell cusrsor-pointer">{{ resa['full-name'] }}<br/>{{ resa['country-phone']+resa['phone'] }}</td>
+              <td class="hidden px-3 py-4 text-sm text-gray-500 lg:table-cell cusrsor-pointer">{{ resa['full-name'] }}<br/>{{ resa['country-phone']+resa['phone'] }}<br/><span v-if="resa['tr-transport']" class="inline-block flex-shrink-0 rounded-full px-2 py-0.5 text-xs font-medium bg-primary-100 text-white">Avec Transport</span></td>
               <td class="hidden px-3 py-4 text-sm text-gray-500 lg:table-cell">{{ resa['nbr-adult'] }} Adultes - {{ resa['nbr-children'] || 0 }} Enfants</td>
               <td class="hidden px-3 py-4 text-sm text-gray-500 lg:table-cell">{{ dateDisplay(resa.arrival) }}</td>
               <td class="hidden px-3 py-4 text-sm text-gray-500 lg:table-cell"><span class="inline-block flex-shrink-0 rounded-full px-2 py-0.5 text-xs font-medium" :class="confirmationLabel[resa['resa-confirmation']].class">{{confirmationLabel[resa['resa-confirmation']].text }}</span></td>
@@ -197,7 +197,7 @@
         });
       },1000),
       currentAgent(resa) {
-        return this.staff.find(({id}) => id == resa.post_author )?.name
+        return this.staff.find(({id}) => id == resa.post_author && resa.post_author !== 1 )?.name || null
       },
       selectResa(resa) {
         this.selectedResa = resa;

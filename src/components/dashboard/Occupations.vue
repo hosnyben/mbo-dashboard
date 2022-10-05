@@ -104,7 +104,6 @@
         await userService.updateOccupation(this.selectedEtab,{
           occupations : data['occupations']
         }).then(({data}) => {
-          console.log(data);
         });
       },2000),
     },
