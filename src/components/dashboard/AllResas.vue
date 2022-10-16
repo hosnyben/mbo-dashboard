@@ -57,7 +57,7 @@
               <td class="hidden px-3 py-4 text-sm text-gray-500 lg:table-cell cusrsor-pointer">{{ resa['full-name'] }}<br/>{{ resa['country-phone']+resa['phone'] }}<br/><span v-if="resa['tr-transport']" class="inline-block flex-shrink-0 rounded-full px-2 py-0.5 text-xs font-medium bg-primary-100 text-white">Avec Transport</span></td>
               <td class="hidden px-3 py-4 text-sm text-gray-500 lg:table-cell">{{ resa['nbr-adult'] }} Adultes - {{ resa['nbr-children'] || 0 }} Enfants</td>
               <td class="hidden px-3 py-4 text-sm text-gray-500 lg:table-cell">{{ dateDisplay(resa.arrival) }}</td>
-              <td class="hidden px-3 py-4 text-sm text-gray-500 lg:table-cell"><span class="inline-block flex-shrink-0 rounded-full px-2 py-0.5 text-xs font-medium" :class="confirmationLabel[resa['resa-confirmation']].class">{{confirmationLabel[resa['resa-confirmation']].text }}</span></td>
+              <td class="hidden px-3 py-4 text-sm text-gray-500 lg:table-cell"><span class="inline-block flex-shrink-0 rounded-full px-2 py-0.5 text-xs font-medium" :class="confirmationLabel[resa['resa-confirmation'] ?? 'waiting'].class">{{ confirmationLabel[resa['resa-confirmation'] ?? 'waiting'].text }}</span></td>
               <td class="py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
                 <span class="text-primary-600 hover:text-primary-900 cursor-pointer" @click="selectResa(resa)">Détails</span>
               </td>
