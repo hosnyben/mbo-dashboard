@@ -307,13 +307,14 @@
       },
       wsp(response) {
         let text;
+        const br = '%0a';
         
         if( response )
-          text = `Bonjour ${this.data['full-name']}, c'est Marrakech Best Of ! Nous venons de vous envoyer la confirmation de réservation par e-mail (Vérifiez dans vos spams si vous n'avez rien reçu). Avez-vous prévu d'autres activités (quad, dromadaire, spa, journée piscine, restaurants, excursions) ? Je suis disponible pour vous conseiller le meilleur à faire pour vos vacances.`;
+          text = `Bonjour ${this.data['full-name']}, c'est Marrakech Best Of !${br}Nous venons de vous envoyer la/les confirmation(s) de réservation par e-mail (Vérifiez dans vos spams si vous n'avez rien reçu). Avez-vous prévu d'autres activités (journée au désert d’Agafay, quad, spa, journées piscine, restaurants, excursions) ?${br}Je suis disponible pour vous conseiller le meilleur à faire pour vos vacances alors n’hésitez pas.`;
         else
           text = `Bonjour ${this.data['full-name']}, vous venez de réserver sur Marrakech Best Of. Votre réservation a été refusée par l'établissement car c'est complet. Souhaitez vous aller ailleurs ?`;
         
-        window.open(`https://wa.me/${this.data['country-phone'].replace('+','')}${this.data.phone}?text=${text}`,'_blank');
+        window.open(`https://api.whatsapp.com/send/?phone=${this.data['country-phone'].replace('+','')}${this.data.phone}&type=phone_number&app_absent=0&text=${text}`,'_blank');
       },
       wspClipboard(target) {
         let text;
@@ -321,7 +322,7 @@
           text = this.data['cancel_url'];
         else {
           const br = '\n';
-          text = `Bonjour, Vous avez une nouvelle réservation : ${br}Nom : ${this.data['full-name']}${br}Nombre de personnes: ${this.data['nbr-adult']} Adulte(s) et ${this.data['nbr-children'] || 0} Enfant(s)${br}Arrivée : ${this.formatDay(new Date(this.data.arrival))}${br}${this.data.arrival !== this.data.departure ? `Départ : ${this.formatDay(new Date(this.data.departure))}${br}`:''}`;
+          text = `Bonjour, Vous avez une nouvelle réservation : ${br}Nom : ${this.data['full-name']}${br}Numéro de téléphone : ${this.data.phone}${br}Nombre de personnes: ${this.data['nbr-adult']} Adulte(s) et ${this.data['nbr-children'] || 0} Enfant(s)${br}Arrivée : ${this.formatDay(new Date(this.data.arrival))}${br}${this.data.arrival !== this.data.departure ? `Départ : ${this.formatDay(new Date(this.data.departure))}${br}`:''}`;
   
           if( this.data.fields && this.data.fields.length ){
             text += `------`
