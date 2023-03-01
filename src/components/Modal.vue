@@ -58,7 +58,7 @@
                           </div>
                         </div>
                         <span v-else>
-                          {{ offers.find(({value}) => value === data.project)?.label }}<br/>
+                          {{ projectName }}<br />
                           <span v-if="data.logtype" class="text-xs">
                             Type de logement : {{ data.logtype }}
                           </span>
@@ -282,6 +282,13 @@
       },
       offers() {
         return this.$store.state.other.offers
+      },
+      projectName() {
+        if( this.data.project ) {
+          return this.offers.find(({value}) => value == this.data.project).label
+        } else {
+          return '...';
+        }
       }
     },
     watch: {

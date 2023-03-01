@@ -92,7 +92,7 @@
 
         if( this.occupations.length ){
           this.occupations.forEach(item => {
-            if( item.id === this.selectedOffer ){
+            if( item.id == this.selectedOffer ){
               if( this.occupationKey != null && item['occupations'][this.occupationKey] )
                 item['occupations'][this.occupationKey] = data;
               else

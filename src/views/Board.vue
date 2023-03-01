@@ -103,7 +103,7 @@ import AllResasVue from '../components/dashboard/AllResas.vue'
         const projects = await userService.getOffers().then(({data}) => {
           const offers = data.map(({id,name,phone}) => {
             return {
-              value : id,
+              value : id.toString(),
               label : name,
               phone : phone
             }
