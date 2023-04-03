@@ -95,10 +95,10 @@
                         <MenuItem v-slot="{ active }">
                           <span @click="selectResa(reservation)" :class="[active ? 'bg-gray-100 text-gray-900' : 'text-gray-700', 'block px-4 py-2 text-sm cursor-pointer']">Détails</span>
                         </MenuItem>
-                        <MenuItem v-slot="{ active }" v-if="(isAdmin || isPartner) && ['urgent','active'].includes(currentResaType) && ['not-confirmed','not-confirmed-owner','waiting'].includes(reservation['resa-confirmation'])">
+                        <MenuItem v-slot="{ active }" v-if="isAdmin && ['urgent','active'].includes(currentResaType) && ['not-confirmed','not-confirmed-owner','waiting'].includes(reservation['resa-confirmation'])">
                           <span @click="confirmResa(reservation.id)" :class="[active ? 'bg-gray-100 text-gray-900' : 'text-gray-700', 'block px-4 py-2 text-sm cursor-pointer']">Accepter</span>
                         </MenuItem>
-                        <MenuItem v-slot="{ active }" v-if="(isAdmin || isPartner) && ['urgent','active'].includes(currentResaType) && ['confirmed','confirmed-owner','waiting'].includes(reservation['resa-confirmation'])">
+                        <MenuItem v-slot="{ active }" v-if="isAdmin && ['urgent','active'].includes(currentResaType) && ['confirmed','confirmed-owner','waiting'].includes(reservation['resa-confirmation'])">
                           <span @click="denyResa(reservation.id)" :class="[active ? 'bg-gray-100 text-gray-900' : 'text-gray-700', 'block px-4 py-2 text-sm cursor-pointer']">Refuser</span>
                         </MenuItem>
                       </div>
