@@ -183,7 +183,7 @@
 
 				if( ['waiting','not-confirmed','not-confirmed-owner'].includes(this.selectedResa['resa-confirmation']) )
 					actions = [...actions,...[{label:'Confirmer',method: () => { this.confirmResa(this.selectedResa) } }]];
-				if( ['waiting','confirmed','confirmed-owner'].includes(this.selectedResa['resa-confirmation']) )
+				if( ['waiting'].includes(this.selectedResa['resa-confirmation']) )
 					actions = [...actions,...[{label:'Refuser',method: () => { this.denyResa(this.selectedResa) } }]];
         
         return actions;
