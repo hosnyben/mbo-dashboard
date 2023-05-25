@@ -84,8 +84,8 @@
       },
       async setOccupation(stay = false) {
         const data = {
-          'from-date' : format(this.from, 'Y-MM-d HH:mm:ss'),
-          'to-date' : format(this.to, 'Y-MM-d HH:mm:ss')
+          'from-date' : format(this.from, 'MM/d/Y HH:mm'),
+          'to-date' : format(this.to, 'MM/d/Y HH:mm')
         };
 
         let toSend = [];
