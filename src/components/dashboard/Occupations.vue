@@ -35,8 +35,8 @@
                       <td class="border-slate-300 text-center" :class="{'border-x':indexl === 0 || indexl === option.options.length - 1,'border':indexl !== 0 && indexl !== option.options.length - 1}">{{ label.value }}</td>
                       <td class="border-slate-300 p-0" :class="{'border-x border-r-0':indexl === 0 || indexl === option.options.length - 1,'border-y border-r-0':indexl !== 0 && indexl !== option.options.length - 1}">
                         <div v-if="label['off-dates']" v-for="occupation,indexc in label['off-dates']" :key="indexc" class="p-3 flex space-x-4 justify-around" :class="{'bg-gray-100':indexc % 2 === 0}">
-                          <Datepicker @update:model-value="modified = true" locale="fr" selectText="Choisir" cancelText="Annuler" :format="formatDate" :minDate="today" :maxDate="maxDate" v-model="occupationEtab.options[index].options[indexl]['off-dates'][indexc]['from-date']"></Datepicker>
-                          <Datepicker @update:model-value="modified = true" locale="fr" selectText="Choisir" cancelText="Annuler" :format="formatDate" :minDate="minDate(occupationEtab.options[index].options[indexl]['off-dates'][indexc]['from-date'])" :maxDate="maxDate" v-model="occupationEtab.options[index].options[indexl]['off-dates'][indexc]['to-date']"></Datepicker>
+                          <Datepicker @update:model-value="modified = true" locale="fr" selectText="Choisir" cancelText="Annuler" :format="formatDate" :minDate="today" :maxDate="maxDate" v-model="occupationEtab.options[index].options[indexl]['off-dates'][indexc]['from-date']" utc />
+                          <Datepicker @update:model-value="modified = true" locale="fr" selectText="Choisir" cancelText="Annuler" :format="formatDate" :minDate="minDate(occupationEtab.options[index].options[indexl]['off-dates'][indexc]['from-date'])" :maxDate="maxDate" v-model="occupationEtab.options[index].options[indexl]['off-dates'][indexc]['to-date']" utc />
                           <div class="flex items-center space-x-2">
                             <span class="cursor-pointer" v-if="modified[index+'-'+indexl+'-'+indexc]"><iconCheck></iconCheck></span>
                             <span class="cursor-pointer" @click="deleteOccupation(index,indexl,indexc)"><iconClose></iconClose></span>
@@ -110,9 +110,19 @@
       },
       async updateOccupationAjax() {
         this.modified = false;
+        var formattedOccupation = this.occupationEtab.options;
+
+        formattedOccupation.forEach(function(option,index) {
+          option.options.forEach(function(label,indexl) {
+            label['off-dates'].forEach(function(date,indexc) {
+              formattedOccupation[index].options[indexl]['off-dates'][indexc]['from-date'] = format(new Date(date['from-date']), 'Y-MM-dd HH:mm')
+              formattedOccupation[index].options[indexl]['off-dates'][indexc]['to-date'] = format(new Date(date['to-date']), 'Y-MM-dd HH:mm')
+            })
+          })
+        })
 
         await userService.updateOccupation(this.selectedEtab,{
-          occupations : this.occupationEtab.options
+          occupations : formattedOccupation
         }).then(() => {
           alert('Occupations modifiées')
         });
