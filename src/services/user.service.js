@@ -26,12 +26,12 @@ class UserService {
     })
   }
   getOccupations() {
-    return axios.get(API_URL + `get_occupations?v=${Math.random()}`, { headers: authHeader() }).catch(({response}) => {
+    return axios.get(API_URL + `get_occupations_v2?v=${Math.random()}`, { headers: authHeader() }).catch(({response}) => {
       if (response.status === 403) this.forceLogout();
     })
   }
   updateOccupation(etabId,data) {
-    return axios.post(API_URL + `update_occupation/${etabId}?v=${Math.random()}`,data, { headers: authHeader() }).catch(({response}) => {
+    return axios.post(API_URL + `update_occupations_v2/${etabId}?v=${Math.random()}`,data, { headers: authHeader() }).catch(({response}) => {
       if (response.status === 403) this.forceLogout();
     })
   }

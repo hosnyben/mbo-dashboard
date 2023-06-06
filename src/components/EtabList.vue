@@ -92,7 +92,7 @@
 			displayValue() {
 				if( this.currentVal !== undefined && this.currentVal !== null ){
 					const item = this.list.find(({value}) => value === this.currentVal);
-					if( item ) return `${item?.label} ${item.count !== undefined ? `(${item?.count})`:''}`
+					if( item ) return `${item?.label}${item.count !== undefined ? ` (${item?.count})`:''}`
 				}
 
 				return 'Choisir';
