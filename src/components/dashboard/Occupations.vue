@@ -5,6 +5,9 @@
         <h1 class="text-xl font-semibold text-gray-900">Occupations</h1>
         <p class="mt-2 text-sm text-gray-700">Liste de toutes les occupations sur vos établissements/offres.</p>
       </div>
+      <div class="mt-4 sm:mt-0 sm:ml-16 sm:flex-none" v-if="!optionOccupation">
+        <RouterLink class="inline-flex items-center justify-center rounded-md border border-transparent bg-primary-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 sm:w-auto" to="/partenaire/occupations/nouvelle">Nouvelle occcupation</RouterLink>
+      </div>
     </div>
     <Loader v-if="loading" />
     <div v-if="occupationEtab">
@@ -13,12 +16,12 @@
           <EtabList v-model="selectedEtab" :list="projects" v-if="projects.length > 1" />
         </div>
         <div class="mt-4 sm:mt-0 sm:ml-16 sm:flex-none">
-          <button :disabled="!modified" @click="updateOccupationAjax" class="inline-flex items-center justify-center rounded-md border border-transparent bg-primary-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 sm:w-auto disabled:opacity-50 disabled:cursor-not-allowed">Mettre à jour</button>
+          <button :disabled="!modified" v-if="optionOccupation" @click="updateOccupationAjax" class="inline-flex items-center justify-center rounded-md border border-transparent bg-primary-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 sm:w-auto disabled:opacity-50 disabled:cursor-not-allowed">Mettre à jour</button>
         </div>
       </div>
 
       <div class=" mt-8 overflow-hidden shadow ring-1 ring-black ring-opacity-5 sm:-mx-0 md:mx-0 md:rounded-lg mb-5">
-        <table class="min-w-full divide-y divide-gray-300">
+        <table class="min-w-full divide-y divide-gray-300" v-if="optionOccupation">
           <thead class="bg-gray-50">
             <tr>
               <th scope="col" class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6">Champs</th>
@@ -53,12 +56,44 @@
             </tr>
           </tbody>
         </table>
+        <table class="min-w-full divide-y divide-gray-300" v-else>
+          <thead class="bg-gray-50">
+            <tr>
+              <th scope="col" class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6">Offre / Établissement</th>
+              <th scope="col" class="hidden px-3 py-3.5 text-left text-sm font-semibold text-gray-900 lg:table-cell">Date/Heure de début</th>
+              <th scope="col" class="hidden px-3 py-3.5 text-left text-sm font-semibold text-gray-900 lg:table-cell">Date/Heure de fin</th>
+              <th scope="col" class="relative py-3.5 pl-3 pr-4 sm:pr-6">
+                <span class="sr-only">Edit</span>
+              </th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-200 bg-white">
+            <tr v-for="occupation,index in occupationEtab.occupations" :key="index">
+              <td class="w-full max-w-0 py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:w-auto sm:max-w-none sm:pl-6">
+                {{ occupationEtab.name }}
+                <dl class="font-normal lg:hidden">
+                  <dt class="sr-only">Date/Here de début</dt>
+                  <dd class="mt-1 truncate text-gray-500 text-xs"><span style="width:25px;display: inline-block;" class="font-semibold">Du : </span> {{ formatDate(occupation['from-date']) }}</dd>
+                  <dt class="sr-only">Date/Heure de fin</dt>
+                  <dd class="mt-1 truncate text-gray-500 text-xs"><span style="width:25px;display: inline-block;" class="font-semibold">À : </span> {{ formatDate(occupation['to-date']) }}</dd>
+                </dl>
+              </td>
+              <td class="hidden px-3 py-4 text-sm text-gray-500 lg:table-cell">{{ formatDate(occupation['from-date']) }}</td>
+              <td class="hidden px-3 py-4 text-sm text-gray-500 lg:table-cell">{{ formatDate(occupation['to-date']) }}</td>
+              <td class="py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
+                <RouterLink class="text-primary-600 hover:text-primary-900 mr-2" :to="`/partenaire/occupations/modifier/${occupationEtab.id}-${index}`">Modifier</RouterLink>
+                <span class="text-primary-600 hover:text-primary-900 cursor-pointer" @click="deleteOccupation(index)">Supprimer</span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </div>
   </div>
 </template>
 
 <script>
+  import { RouterLink } from 'vue-router'
   import userService from '../../services/user.service';
   import format from 'date-fns/format'
   import { fr } from 'date-fns/locale'
@@ -70,11 +105,12 @@
   import Datepicker from '@vuepic/vue-datepicker'
   import '@vuepic/vue-datepicker/dist/main.css'
   import startOfToday from 'date-fns/startOfToday'
+  import { debounce } from 'lodash';
 
   export default {
     name: 'Occupations',
     components:{
-      EtabList,Loader,Datepicker,iconCheck,iconClose
+      RouterLink,EtabList,Loader,Datepicker,iconCheck,iconClose
     },
     data() {
       return {
@@ -101,8 +137,19 @@
 				return format(new Date(date), 'd LLLL Y à HH:mm',{locale: fr})
       },
       deleteOccupation(index,indexl,indexc) {
-        this.modified = true;
-        this.occupationEtab.options[index].options[indexl]['off-dates'].splice(indexc, 1)
+        if( this.optionOccupation ){
+          this.modified = true;
+          this.occupationEtab.options[index].options[indexl]['off-dates'].splice(indexc, 1)
+        } else {
+          this.occupations.forEach(item => {
+            if( item.id === this.selectedEtab ){
+              delete item.occupations[index];
+            }
+            item.occupations = item.occupations.filter(oc => oc);
+          });
+
+          this.deleteOccupationAjax();
+        }
       },
       newOccupation(index,indexl,indexc) {
         this.modified = true;
@@ -129,9 +176,22 @@
       },
       minDate(from = null) {
         return from || this.today
-      }
+      },
+      deleteOccupationAjax : debounce (async function () {
+        const data = this.occupations.find(({id}) => {
+          return id === this.selectedEtab
+        })
+
+        await userService.updateOccupation(this.selectedEtab,{
+          occupations : data['occupations']
+        }).then(({data}) => {
+        });
+      },2000)
     },
     computed: {
+      optionOccupation() {
+        return this.occupationEtab && this.occupationEtab.options.length > 0
+      },
 			today() {
 				return startOfToday();
 			},

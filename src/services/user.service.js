@@ -31,6 +31,11 @@ class UserService {
     })
   }
   updateOccupation(etabId,data) {
+    return axios.post(API_URL + `update_occupation/${etabId}?v=${Math.random()}`,data, { headers: authHeader() }).catch(({response}) => {
+      if (response.status === 403) this.forceLogout();
+    })
+  }
+  updateOccupation_v2(etabId,data) {
     return axios.post(API_URL + `update_occupations_v2/${etabId}?v=${Math.random()}`,data, { headers: authHeader() }).catch(({response}) => {
       if (response.status === 403) this.forceLogout();
     })
