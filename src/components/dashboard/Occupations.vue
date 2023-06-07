@@ -168,7 +168,7 @@
           })
         })
 
-        await userService.updateOccupation(this.selectedEtab,{
+        await userService.updateOccupation_v2(this.selectedEtab,{
           occupations : formattedOccupation
         }).then(() => {
           alert('Occupations modifiées')
